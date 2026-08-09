@@ -1,0 +1,346 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  CASH
+  BANK
+  E_WALLET
+  CREDIT_CARD
+  INVESTMENT
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum GoalStatus {
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  currency      String    @default("IDR")
+  locale        String    @default("id-ID")
+  timezone      String    @default("Asia/Jakarta")
+  theme         String    @default("system")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Auth Relations
+  sessions             Session[]
+  authAccounts         Account[]
+  
+  // Finance Relations
+  financialAccounts    FinancialAccount[]
+  categories           Category[]
+  budgets              Budget[]
+  transactions         Transaction[]
+  paymentMethods       PaymentMethod[]
+  goals                Goal[]
+  subscriptions        Subscription[]
+  recurringTransactions RecurringTransaction[]
+  tags                 Tag[]
+  settings             Settings?
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  userId                String    @map("user_id")
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  idToken               String?   @map("id_token")
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("verifications")
+}
+
+model FinancialAccount {
+  id             String      @id @default(uuid())
+  userId         String      @map("user_id")
+  name           String
+  accountType    AccountType @map("account_type")
+  currentBalance Float       @default(0) @map("current_balance")
+  color          String      @default("#3b82f6")
+  icon           String      @default("Wallet")
+  isDefault      Boolean     @default(false) @map("is_default")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceTransactions   Transaction[] @relation("SourceAccount")
+  targetTransactions   Transaction[] @relation("TargetAccount")
+  subscriptions        Subscription[]
+
+  @@index([userId])
+  @@map("financial_accounts")
+}
+
+model Category {
+  id        String       @id @default(uuid())
+  userId    String       @map("user_id")
+  name      String
+  type      CategoryType
+  color     String       @default("#10b981")
+  icon      String       @default("Folder")
+  archived  Boolean      @default(false)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  budgets       Budget[]
+  transactions  Transaction[]
+  subscriptions Subscription[]
+
+  @@index([userId])
+  @@index([userId, type])
+  @@map("categories")
+}
+
+model Budget {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  categoryId      String   @map("category_id")
+  amount          Float
+  month           Int
+  year            Int
+  rolloverEnabled Boolean  @default(false) @map("rollover_enabled")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, month, year])
+  @@index([userId, month, year])
+  @@map("budgets")
+}
+
+model Transaction {
+  id                     String          @id @default(uuid())
+  userId                 String          @map("user_id")
+  accountId              String          @map("account_id")
+  toAccountId            String?         @map("to_account_id")
+  categoryId             String          @map("category_id")
+  paymentMethodId        String?         @map("payment_method_id")
+  recurringTransactionId String?         @map("recurring_transaction_id")
+  transactionType        TransactionType @map("transaction_type")
+  amount                 Float
+  date                   DateTime
+  title                  String
+  note                   String?
+  merchant               String?
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @updatedAt @map("updated_at")
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account              FinancialAccount      @relation("SourceAccount", fields: [accountId], references: [id], onDelete: Restrict)
+  toAccount            FinancialAccount?     @relation("TargetAccount", fields: [toAccountId], references: [id], onDelete: SetNull)
+  category             Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  paymentMethod        PaymentMethod?        @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
+  attachments          Attachment[]
+  tags                 TransactionTag[]
+
+  @@index([userId])
+  @@index([userId, date])
+  @@index([userId, categoryId])
+  @@index([userId, accountId])
+  @@map("transactions")
+}
+
+model PaymentMethod {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  icon      String   @default("CreditCard")
+  color     String   @default("#64748b")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("payment_methods")
+}
+
+model Goal {
+  id            String     @id @default(uuid())
+  userId        String     @map("user_id")
+  title         String
+  description   String?
+  targetAmount  Float      @map("target_amount")
+  currentAmount Float      @default(0) @map("current_amount")
+  targetDate    DateTime   @map("target_date")
+  status        GoalStatus @default(IN_PROGRESS)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@map("goals")
+}
+
+model Subscription {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  accountId    String   @map("account_id")
+  categoryId   String   @map("category_id")
+  name         String
+  amount       Float
+  billingCycle String   @default("MONTHLY") @map("billing_cycle")
+  renewalDate  DateTime @map("renewal_date")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account  FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+model RecurringTransaction {
+  id        String             @id @default(uuid())
+  userId    String             @map("user_id")
+  title     String
+  amount    Float
+  frequency RecurringFrequency @default(MONTHLY)
+  startDate DateTime           @map("start_date")
+  endDate   DateTime?          @map("end_date")
+  nextRun   DateTime           @map("next_run")
+  active    Boolean            @default(true)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("recurring_transactions")
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  color     String   @default("#64748b")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions TransactionTag[]
+
+  @@index([userId])
+  @@map("tags")
+}
+
+model TransactionTag {
+  transactionId String @map("transaction_id")
+  tagId         String @map("tag_id")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tagId])
+  @@map("transaction_tags")
+}
+
+model Attachment {
+  id            String   @id @default(uuid())
+  transactionId String   @map("transaction_id")
+  fileName      String   @map("file_name")
+  fileUrl       String   @map("file_url")
+  mimeType      String   @map("mime_type")
+  fileSize      Int      @map("file_size")
+  uploadedAt    DateTime @default(now()) @map("uploaded_at")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@map("attachments")
+}
+
+model Settings {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  currency             String   @default("IDR")
+  language             String   @default("id")
+  theme                String   @default("system")
+  notificationsEnabled Boolean  @default(true) @map("notifications_enabled")
+  weeklyReport         Boolean  @default(true) @map("weekly_report")
+  monthlyReport        Boolean  @default(true) @map("monthly_report")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("settings")
+}
