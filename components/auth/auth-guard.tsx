@@ -51,10 +51,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       }
     }, 1500);
 
-    client.auth.getSession().then((res: { data: { session: any } }) => {
+    client.auth.getSession().then((res) => {
       if (!isMounted) return;
       clearTimeout(timer);
-      if (res.data?.session) {
+      if (res?.data?.session) {
         setIsAuthenticated(true);
         setUserId(res.data.session.user.id);
         initRealtimeSync().catch(() => {});
@@ -70,11 +70,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = client.auth.onAuthStateChange((_event: string, session: any) => {
+    const authRes = client.auth.onAuthStateChange((_event: string, session: any) => {
       if (!isMounted) return;
       if (session) {
         setIsAuthenticated(true);
-        setUserId(session.user.id);
+        setUserId(session.user?.id || null);
         initRealtimeSync().catch(() => {});
       } else {
         setIsAuthenticated(false);
@@ -85,7 +85,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => {
       isMounted = false;
       clearTimeout(timer);
-      subscription.unsubscribe();
+      authRes?.data?.subscription?.unsubscribe?.();
     };
   }, []);
 
@@ -97,13 +97,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const client = getSupabase();
     if (client) {
       setShowConfigModal(false);
-      client.auth.getSession().then((res: { data: { session: any } }) => {
-        if (res.data.session) {
+      client.auth.getSession().then((res) => {
+        if (res?.data?.session) {
           setIsAuthenticated(true);
-          initRealtimeSync();
+          initRealtimeSync().catch(() => {});
         } else {
           setIsAuthenticated(false);
         }
+      }).catch(() => {
+        setIsAuthenticated(false);
       });
     }
   };
