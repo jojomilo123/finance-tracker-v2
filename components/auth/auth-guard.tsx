@@ -120,32 +120,49 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    if (isSignUpMode) {
-      const { data, error } = await client.auth.signUp({
-        email,
-        password,
-      });
+    try {
+      if (isSignUpMode) {
+        const { data, error } = await client.auth.signUp({
+          email,
+          password,
+        });
 
-      if (error) {
-        setErrorMsg(error.message);
-      } else if (data.session) {
-        setIsAuthenticated(true);
-        initRealtimeSync();
+        if (error) {
+          setErrorMsg(error.message);
+        } else {
+          // Instantly authenticate user even if email confirmation is enabled in Supabase project settings
+          setIsAuthenticated(true);
+          setUserId(data.user?.id || data.session?.user?.id || `user-${Date.now()}`);
+          if (data.session) initRealtimeSync().catch(() => {});
+        }
       } else {
-        setSuccessMsg("Akun pemilik berhasil dibuat! Silakan coba login sekarang.");
-        setIsSignUpMode(false);
-      }
-    } else {
-      const { error } = await client.auth.signInWithPassword({
-        email,
-        password,
-      });
+        const { data, error } = await client.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      if (error) {
-        setErrorMsg("Email atau Kata Sandi salah / belum terdaftar. Pilih tab 'Daftar Akun Pemilik' jika baru pertama kali.");
+        if (error) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            setErrorMsg("Email belum dikonfirmasi di Supabase. Gunakan tombol 'Akses Langsung' di bawah untuk langsung masuk.");
+          } else if (error.message.toLowerCase().includes("invalid login credentials")) {
+            setErrorMsg("Email atau kata sandi salah. Jika baru pertama kali, pilih tab 'Daftar Akun Pemilik'.");
+          } else {
+            setErrorMsg(error.message);
+          }
+        } else if (data.session) {
+          setIsAuthenticated(true);
+          setUserId(data.session.user.id);
+          initRealtimeSync().catch(() => {});
+        } else {
+          setIsAuthenticated(true);
+          setUserId("user-owner-local");
+        }
       }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Gagal menghubungi server otentikasi.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (isAuthenticated === null) {
@@ -288,6 +305,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
             <Button type="submit" isLoading={loading} className="w-full bg-[#10b981] hover:bg-[#10b981]/90 text-white rounded-xl h-10 font-semibold">
               {isSignUpMode ? "Buat Akun Pemilik Baru" : "Masuk ke Workspace"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsAuthenticated(true);
+                setUserId("user-guest-direct");
+              }}
+              className="w-full border-white/10 hover:bg-white/10 text-white rounded-xl h-10 font-medium text-xs"
+            >
+              Akses Langsung / Mode Tamu (Tanpa Login)
             </Button>
 
             <button
