@@ -26,17 +26,31 @@ import { MiniTrend } from "@/components/charts/mini-trend";
 
 export default function DashboardPage() {
   const { toast } = useToast();
-  const { transactions, accounts, addTransaction } = useTransactionStore();
+  const { transactions, accounts, budgets, addTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [workspaceImage, setWorkspaceImage] = React.useState("/images/cozy-desk.png");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedImg = localStorage.getItem("finance-tracker-workspace-img");
+      if (savedImg) setWorkspaceImage(savedImg);
+    }
+  }, []);
+
   const handleChangePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setWorkspaceImage(url);
-      toast({ variant: "success", title: "Foto Diubah", description: "Foto workspace berhasil diperbarui." });
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setWorkspaceImage(result);
+          localStorage.setItem("finance-tracker-workspace-img", result);
+          toast({ variant: "success", title: "Foto Diubah", description: "Foto workspace berhasil diperbarui dan tersimpan." });
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -70,7 +84,7 @@ export default function DashboardPage() {
         map[t.categoryName] = (map[t.categoryName] || 0) + t.amount;
       });
 
-    const result = Object.entries(map).map(([name, value], idx) => {
+    return Object.entries(map).map(([name, value], idx) => {
       const colors = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ec4899", "#06b6d4"];
       return {
         name,
@@ -78,17 +92,6 @@ export default function DashboardPage() {
         color: colors[idx % colors.length],
       };
     });
-
-    if (result.length === 0) {
-      return [
-        { name: "Makanan & Minuman", value: 1478985, color: "#10b981" },
-        { name: "Tempat Tinggal", value: 800000, color: "#3b82f6" },
-        { name: "Transportasi", value: 700000, color: "#8b5cf6" },
-        { name: "Hiburan", value: 600000, color: "#f59e0b" },
-        { name: "Internet", value: 300000, color: "#ec4899" },
-      ];
-    }
-    return result;
   }, [transactions]);
 
   const handleCreateTransaction = (values: TransactionFormValues) => {
@@ -133,7 +136,7 @@ export default function DashboardPage() {
               fill
               className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
               priority
-              unoptimized={workspaceImage.startsWith("blob:")}
+              unoptimized={workspaceImage.startsWith("blob:") || workspaceImage.startsWith("data:")}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#080D16] via-transparent to-transparent opacity-80" />
             <div className="relative z-10 p-6 flex flex-col justify-between h-full space-y-36">
@@ -174,7 +177,7 @@ export default function DashboardPage() {
                     <span className="text-xs font-medium text-[#AAB5C5]">Income</span>
                   </div>
                   <div className="text-lg font-bold font-mono text-[#F5F7FA]">
-                    {formatCurrency(totalIncome || 18200000)}
+                    {formatCurrency(totalIncome)}
                   </div>
                   <MiniTrend data={
                     (() => {
@@ -209,7 +212,7 @@ export default function DashboardPage() {
                     <span className="text-xs font-medium text-[#AAB5C5]">Expense</span>
                   </div>
                   <div className="text-lg font-bold font-mono text-[#F5F7FA]">
-                    {formatCurrency(totalExpense || 5750000)}
+                    {formatCurrency(totalExpense)}
                   </div>
                   <MiniTrend data={
                     (() => {
@@ -243,7 +246,7 @@ export default function DashboardPage() {
                     <span className="text-xs font-medium text-[#AAB5C5]">Balance</span>
                   </div>
                   <div className="text-lg font-bold font-mono text-[#F5F7FA]">
-                    {formatCurrency(totalBalance || 12450000)}
+                    {formatCurrency(totalBalance)}
                   </div>
                   <MiniTrend data={
                     (() => {
@@ -290,45 +293,29 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-bold text-[#F5F7FA]">Budget Progress</h3>
 
                 <div className="space-y-4">
-                  {/* Needs Budget */}
-                  <div className="p-3 rounded-xl bg-[#172131] border border-white/5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-1.5 rounded-lg bg-[#10b981]/20 text-[#10b981]">
-                          <ShoppingBag className="h-4 w-4" />
+                  {budgets.slice(0, 3).map((b) => {
+                    const pct = b.budgetAmount > 0 ? Math.min(100, Math.round((b.spentAmount / b.budgetAmount) * 100)) : 0;
+                    return (
+                      <div key={b.id} className="p-3 rounded-xl bg-[#172131] border border-white/5 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className="p-1.5 rounded-lg shrink-0" style={{ backgroundColor: `${b.categoryColor}20`, color: b.categoryColor }}>
+                              <ShoppingBag className="h-4 w-4" />
+                            </div>
+                            <span className="text-xs font-semibold text-[#F5F7FA]">{b.categoryName}</span>
+                          </div>
+                          <span className="text-xs font-bold" style={{ color: b.categoryColor }}>{pct}%</span>
                         </div>
-                        <span className="text-xs font-semibold text-[#F5F7FA]">Needs</span>
-                      </div>
-                      <span className="text-xs font-bold text-[#10b981]">75%</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-[#AAB5C5]">
-                      <span>{formatCurrency(3750000)}</span>
-                      <span>{formatCurrency(5000000)}</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-[#10b981] rounded-full" style={{ width: "75%" }} />
-                    </div>
-                  </div>
-
-                  {/* Wants Budget */}
-                  <div className="p-3 rounded-xl bg-[#172131] border border-white/5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-1.5 rounded-lg bg-[#3b82f6]/20 text-[#3b82f6]">
-                          <Heart className="h-4 w-4" />
+                        <div className="flex items-center justify-between text-[11px] text-[#AAB5C5]">
+                          <span>{formatCurrency(b.spentAmount)}</span>
+                          <span>{formatCurrency(b.budgetAmount)}</span>
                         </div>
-                        <span className="text-xs font-semibold text-[#F5F7FA]">Wants</span>
+                        <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: b.categoryColor }} />
+                        </div>
                       </div>
-                      <span className="text-xs font-bold text-[#3b82f6]">40%</span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-[#AAB5C5]">
-                      <span>{formatCurrency(2400000)}</span>
-                      <span>{formatCurrency(6000000)}</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-[#3b82f6] rounded-full" style={{ width: "40%" }} />
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

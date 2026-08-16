@@ -5,7 +5,8 @@ import { formatCurrency, cn } from "@/lib/utils";
 
 interface SummaryCardProps {
   title: string;
-  amount: number;
+  amount?: number;
+  value?: string;
   changePercentage?: number;
   changePeriod?: string;
   icon: LucideIcon;
@@ -18,6 +19,7 @@ interface SummaryCardProps {
 export function SummaryCard({
   title,
   amount,
+  value,
   changePercentage,
   changePeriod = "dibanding bulan lalu",
   icon: Icon,
@@ -42,8 +44,8 @@ export function SummaryCard({
         </div>
 
         <div className="space-y-1">
-          <div className={`text-2xl font-bold tracking-tight ${amount < 0 ? "text-rose-400" : ""}`}>
-            {formatCurrency(amount)}
+          <div className={`text-2xl font-bold tracking-tight ${amount !== undefined && amount < 0 ? "text-rose-400" : ""}`}>
+            {value !== undefined ? value : formatCurrency(amount ?? 0)}
           </div>
           {subtitle && (
             <p className="text-xs text-muted-foreground">{subtitle}</p>

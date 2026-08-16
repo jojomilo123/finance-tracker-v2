@@ -1,17 +1,21 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { CurrencyCode } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export type SupportedCurrency = "IDR" | "USD" | "EUR" | "SGD";
+export type SupportedCurrency = CurrencyCode;
 
 const CURRENCY_SYMBOLS: Record<SupportedCurrency, string> = {
   IDR: "Rp",
   USD: "$",
   EUR: "€",
   SGD: "S$",
+  JPY: "¥",
+  GBP: "£",
+  AUD: "A$",
 };
 
 const CURRENCY_LOCALES: Record<SupportedCurrency, string> = {
@@ -19,6 +23,9 @@ const CURRENCY_LOCALES: Record<SupportedCurrency, string> = {
   USD: "en-US",
   EUR: "de-DE",
   SGD: "en-SG",
+  JPY: "ja-JP",
+  GBP: "en-GB",
+  AUD: "en-AU",
 };
 
 export function formatCurrency(
@@ -38,9 +45,13 @@ export function formatCurrency(
     return isNegative ? `-${symbol}${formattedNumber}` : `${symbol}${formattedNumber}`;
   }
 
+  const fractionDigits = currency === "JPY" ? 0 : 2;
+
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currency,
-    minimumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(amount);
 }
+

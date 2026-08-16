@@ -72,7 +72,7 @@ export default function SubscriptionsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SummaryCard title="Total Bulanan" amount={monthlyCost} icon={RefreshCw} iconColor="text-blue-500" />
           <SummaryCard title="Total Setahun" amount={monthlyCost * 12} icon={Calendar} iconColor="text-purple-500" />
-          <SummaryCard title="Layanan Aktif" amount={0} subtitle={`${activeCount} dari ${subscriptions.length} Aktif`} icon={AlertCircle} iconColor="text-emerald-500" />
+          <SummaryCard title="Layanan Aktif" value={`${activeCount} / ${subscriptions.length}`} subtitle="Langganan Aktif" icon={AlertCircle} iconColor="text-emerald-500" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

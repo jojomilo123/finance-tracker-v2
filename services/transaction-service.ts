@@ -121,7 +121,7 @@ export async function createTransaction(data: CreateTransactionInput) {
 
 export async function deleteTransaction(id: string, userId: string) {
   return await prisma.$transaction(async (tx) => {
-    const existing = await tx.transaction.findUnique({
+    const existing = await tx.transaction.findFirst({
       where: { id, userId },
     });
 

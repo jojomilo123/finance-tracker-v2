@@ -76,8 +76,8 @@ export default function GoalsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SummaryCard title="Total Terkumpul" amount={totalSaved} subtitle={`dari ${formatCurrency(totalTarget)}`} icon={PiggyBank} iconColor="text-emerald-500" />
-          <SummaryCard title="Pencapaian" amount={0} subtitle={`${Math.round((totalSaved / (totalTarget || 1)) * 100)}% Tercapai`} icon={Target} iconColor="text-blue-500" />
-          <SummaryCard title="Target Selesai" amount={0} subtitle={`${completedCount} dari ${goals.length} Impian`} icon={Award} iconColor="text-purple-500" />
+          <SummaryCard title="Pencapaian" value={`${Math.round((totalSaved / (totalTarget || 1)) * 100)}%`} subtitle="Tercapai" icon={Target} iconColor="text-blue-500" />
+          <SummaryCard title="Target Selesai" value={`${completedCount} / ${goals.length}`} subtitle="Impian Selesai" icon={Award} iconColor="text-purple-500" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -17,8 +17,17 @@ export default function ExpensesPage() {
   const { transactions, accounts, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-  const expenseItems = transactions.filter((t) => t.transactionType === "EXPENSE");
-  const totalExpense = expenseItems.reduce((acc, curr) => acc + curr.amount, 0);
+  const expenseItems = React.useMemo(() => transactions.filter((t) => t.transactionType === "EXPENSE"), [transactions]);
+  const totalExpense = React.useMemo(() => expenseItems.reduce((acc, curr) => acc + curr.amount, 0), [expenseItems]);
+
+  const topCategoryItem = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    expenseItems.forEach((t) => {
+      map[t.categoryName] = (map[t.categoryName] || 0) + t.amount;
+    });
+    const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
+    return sorted[0] ? { name: sorted[0][0], amount: sorted[0][1] } : { name: "-", amount: 0 };
+  }, [expenseItems]);
 
   const handleCreateExpense = (values: TransactionFormValues) => {
     const acc = accounts.find((a) => a.id === values.accountId);
@@ -103,8 +112,8 @@ export default function ExpensesPage() {
           />
           <SummaryCard
             title="Kategori Tertinggi"
-            amount={300000}
-            subtitle="Internet"
+            amount={topCategoryItem.amount}
+            subtitle={topCategoryItem.name}
             icon={TrendingDown}
             iconColor="text-purple-500"
           />

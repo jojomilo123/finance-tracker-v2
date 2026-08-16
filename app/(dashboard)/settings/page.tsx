@@ -7,47 +7,49 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useTransactionStore } from "@/stores/use-transaction-store";
-import { User, ShieldCheck, Sliders, AlertTriangle, Save, RotateCcw } from "lucide-react";
+import { Sliders, AlertTriangle, Save, RotateCcw, User } from "lucide-react";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { settings, updateSettings } = useTransactionStore();
-  const [activeTab, setActiveTab] = React.useState<"profile" | "security" | "preferences" | "danger">("profile");
+  const { settings, updateSettings, resetStore } = useTransactionStore();
+  const [activeTab, setActiveTab] = React.useState<"workspace" | "preferences" | "danger">("workspace");
 
-  const [name, setName] = React.useState(settings.name);
-  const [email, setEmail] = React.useState(settings.email);
+  const [displayName, setDisplayName] = React.useState(settings.name);
   const [timezone, setTimezone] = React.useState(settings.timezone);
   const [currency, setCurrency] = React.useState(settings.currency);
   const [isLoading, setIsLoading] = React.useState(false);
 
   // Sync from store when it changes
   React.useEffect(() => {
-    setName(settings.name);
-    setEmail(settings.email);
+    setDisplayName(settings.name);
     setTimezone(settings.timezone);
     setCurrency(settings.currency);
   }, [settings]);
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    updateSettings({ name, email, timezone, currency });
+    await new Promise((r) => setTimeout(r, 300));
+    updateSettings({ name: displayName, timezone, currency });
     setIsLoading(false);
-    toast({ variant: "success", title: "Profil Disimpan", description: "Pengaturan profil Anda berhasil diperbarui." });
+    toast({ variant: "success", title: "Pengaturan Disimpan", description: "Nama dan preferensi berhasil diperbarui." });
   };
 
   const handleResetAllData = () => {
     if (typeof window !== "undefined") {
+      const savedImg = localStorage.getItem("finance-tracker-workspace-img");
+      resetStore();
       localStorage.removeItem("finance-tracker-tx-store");
-      toast({ title: "Data Direset", description: "Semua data keuangan telah dihapus. Halaman akan dimuat ulang." });
-      setTimeout(() => window.location.reload(), 1500);
+      if (savedImg) {
+        localStorage.setItem("finance-tracker-workspace-img", savedImg);
+      }
+      toast({ title: "Data Direset Ke Kondisi Baru", description: "Semua data transaksi & saldo telah direset ke 0. Foto workspace Anda tetap tersimpan." });
+      setTimeout(() => window.location.reload(), 1000);
     }
   };
 
   const tabs = [
-    { id: "profile" as const, label: "Profil Pengguna", icon: User, variant: "default" },
-    { id: "security" as const, label: "Keamanan & Sandi", icon: ShieldCheck, variant: "default" },
+    { id: "workspace" as const, label: "Pengguna Lokal", icon: User, variant: "default" },
     { id: "preferences" as const, label: "Preferensi Aplikasi", icon: Sliders, variant: "default" },
     { id: "danger" as const, label: "Zona Bahaya", icon: AlertTriangle, variant: "danger" },
   ];
@@ -57,7 +59,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pengaturan</h1>
-          <p className="text-sm text-muted-foreground">Kelola identitas, preferensi, dan data akun Anda.</p>
+          <p className="text-sm text-muted-foreground">Kelola nama pengguna, preferensi tampilan, dan data Anda.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -91,29 +93,30 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {activeTab === "profile" && "Informasi Profil"}
-                  {activeTab === "security" && "Keamanan Sesi"}
+                  {activeTab === "workspace" && "Pengguna Lokal"}
                   {activeTab === "preferences" && "Preferensi Aplikasi"}
                   {activeTab === "danger" && "Zona Bahaya"}
                 </CardTitle>
                 <CardDescription>
-                  {activeTab === "profile" && "Perbarui identitas dan pengaturan tampilan."}
-                  {activeTab === "security" && "Pengaturan keamanan untuk penggunaan lokal."}
-                  {activeTab === "preferences" && "Atur format dan preferensi sistem."}
+                  {activeTab === "workspace" && "Ubah nama yang ditampilkan di navbar dan zona waktu serta mata uang default."}
+                  {activeTab === "preferences" && "Atur format penyimpanan dan ekspor data Anda."}
                   {activeTab === "danger" && "Tindakan destruktif pada data akun Anda."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {activeTab === "profile" && (
-                  <form onSubmit={handleSaveProfile} className="space-y-4">
+                {activeTab === "workspace" && (
+                  <form onSubmit={handleSaveWorkspace} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium">Nama Lengkap</label>
-                        <Input value={name} onChange={(e) => setName(e.target.value)} />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium">Alamat Email</label>
-                        <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+                      <div className="space-y-1 md:col-span-2">
+                        <label className="text-xs font-medium">Nama Pengguna</label>
+                        <Input
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          placeholder="Nama yang ditampilkan di navbar"
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          Nama ini akan ditampilkan di sudut kanan atas aplikasi.
+                        </p>
                       </div>
                       <div className="space-y-1">
                         <label className="text-xs font-medium">Zona Waktu</label>
@@ -142,22 +145,6 @@ export default function SettingsPage() {
                       </Button>
                     </div>
                   </form>
-                )}
-
-                {activeTab === "security" && (
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-[#172131] border border-white/5 space-y-2">
-                      <p className="text-xs font-semibold text-foreground">Mode Lokal Aktif</p>
-                      <p className="text-xs text-muted-foreground">
-                        Aplikasi ini berjalan secara lokal. Semua data disimpan di browser Anda (localStorage).
-                        Tidak ada data yang dikirim ke server manapun.
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-[#172131] border border-white/5 space-y-2">
-                      <p className="text-xs font-semibold text-foreground">Sesi Aktif</p>
-                      <p className="text-xs text-muted-foreground">Perangkat Ini — Browser Lokal</p>
-                    </div>
-                  </div>
                 )}
 
                 {activeTab === "preferences" && (
@@ -200,7 +187,7 @@ export default function SettingsPage() {
                         Tindakan ini tidak dapat dibatalkan. Semua transaksi, anggaran, akun, target, dan langganan akan dihapus secara permanen dari localStorage browser Anda.
                       </p>
                       <Button variant="destructive" size="sm" onClick={handleResetAllData} className="gap-2">
-                        <RotateCcw className="h-4 w-4" /> Hapus Semua Data & Reset
+                        <RotateCcw className="h-4 w-4" /> Hapus Semua Data &amp; Reset
                       </Button>
                     </div>
                   </div>

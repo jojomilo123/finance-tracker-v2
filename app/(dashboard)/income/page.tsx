@@ -17,8 +17,17 @@ export default function IncomePage() {
   const { transactions, accounts, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-  const incomeItems = transactions.filter((t) => t.transactionType === "INCOME");
-  const totalIncome = incomeItems.reduce((acc, curr) => acc + curr.amount, 0);
+  const incomeItems = React.useMemo(() => transactions.filter((t) => t.transactionType === "INCOME"), [transactions]);
+  const totalIncome = React.useMemo(() => incomeItems.reduce((acc, curr) => acc + curr.amount, 0), [incomeItems]);
+
+  const topIncomeItem = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    incomeItems.forEach((t) => {
+      map[t.categoryName] = (map[t.categoryName] || 0) + t.amount;
+    });
+    const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
+    return sorted[0] ? { name: sorted[0][0], amount: sorted[0][1] } : { name: "-", amount: 0 };
+  }, [incomeItems]);
 
   const handleCreateIncome = (values: TransactionFormValues) => {
     const acc = accounts.find((a) => a.id === values.accountId);
@@ -102,8 +111,8 @@ export default function IncomePage() {
           />
           <SummaryCard
             title="Sumber Terbesar"
-            amount={8500000}
-            subtitle="Gaji Utama"
+            amount={topIncomeItem.amount}
+            subtitle={topIncomeItem.name}
             icon={TrendingUp}
             iconColor="text-purple-500"
           />

@@ -6,9 +6,8 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Finance Tracker SaaS — Intelligent Personal Finance Operating System",
-  description:
-    "A premium, production-grade personal finance application tailored for intelligent wealth management, automated budgeting, and AI insights.",
+  title: "Finance Tracker",
+  description: "Aplikasi pencatatan keuangan pribadi lokal. Catat pemasukan, pengeluaran, anggaran, dan target finansial Anda.",
 };
 
 export default function RootLayout({

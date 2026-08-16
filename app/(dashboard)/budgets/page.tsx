@@ -82,7 +82,7 @@ export default function BudgetsPage() {
           <SummaryCard title="Total Target Anggaran" amount={totalBudget} icon={PieChart} iconColor="text-blue-500" />
           <SummaryCard title="Total Pengeluaran" amount={totalSpent} icon={TrendingDown} iconColor="text-rose-500" />
           <SummaryCard title="Sisa Anggaran Bersih" amount={remainingBudget} icon={CheckCircle2} iconColor="text-emerald-500" />
-          <SummaryCard title="Tingkat Penggunaan" amount={0} subtitle={`${Math.round((totalSpent / (totalBudget || 1)) * 100)}% dari Anggaran`} icon={Sparkles} iconColor="text-purple-500" />
+          <SummaryCard title="Tingkat Penggunaan" value={`${Math.round((totalSpent / (totalBudget || 1)) * 100)}%`} subtitle="dari Total Anggaran" icon={Sparkles} iconColor="text-purple-500" />
         </div>
 
         <div className="space-y-4">

@@ -7,16 +7,26 @@ import { ExpensePieChart } from "@/components/charts/expense-pie-chart";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { useTransactionStore } from "@/stores/use-transaction-store";
 import { LineChart as LineChartIcon, Store, CreditCard, Building2 } from "lucide-react";
 
 export default function AnalyticsPage() {
-  const merchantData = [
-    { name: "Tokopedia", amount: 1200000, visits: 4 },
-    { name: "Resto Sederhana", amount: 850000, visits: 8 },
-    { name: "IndiHome", amount: 300000, visits: 1 },
-    { name: "Pertamina", amount: 250000, visits: 5 },
-    { name: "Starbucks", amount: 180000, visits: 3 },
-  ];
+  const { transactions } = useTransactionStore();
+
+  const merchantData = React.useMemo(() => {
+    const map: Record<string, { amount: number; visits: number }> = {};
+    transactions.forEach((t) => {
+      const merchantName = t.merchant || t.title;
+      if (merchantName) {
+        if (!map[merchantName]) map[merchantName] = { amount: 0, visits: 0 };
+        map[merchantName].amount += t.amount;
+        map[merchantName].visits += 1;
+      }
+    });
+    return Object.entries(map)
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [transactions]);
 
   const paymentMethodUsage = [
     { name: "QRIS", percentage: 42, color: "#ef4444" },
@@ -68,6 +78,11 @@ export default function AnalyticsPage() {
                   </span>
                 </div>
               ))}
+              {merchantData.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-6">
+                  Belum ada data merchant. Catat transaksi baru dengan menyertakan nama merchant.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -60,15 +60,19 @@ export const reducer = (state: State, action: ActionType): State => {
       const { toastId } = action;
       if (toastId) {
         addToRemoveQueue(toastId);
+        return {
+          ...state,
+          toasts: state.toasts.filter((t) => t.id !== toastId),
+        };
       } else {
         state.toasts.forEach((t) => {
           addToRemoveQueue(t.id);
         });
+        return {
+          ...state,
+          toasts: [],
+        };
       }
-      return {
-        ...state,
-        toasts: state.toasts.filter((t) => t.id !== toastId),
-      };
     }
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
