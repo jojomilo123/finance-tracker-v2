@@ -32,24 +32,33 @@ export default function DashboardPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    if (settings.avatarUrl) {
-      setWorkspaceImage(settings.avatarUrl);
-    } else if (typeof window !== "undefined") {
-      const savedImg = localStorage.getItem("finance-tracker-workspace-img");
-      if (savedImg) setWorkspaceImage(savedImg);
+    if (typeof window !== "undefined") {
+      // Purge old low-resolution legacy image key from localStorage
+      localStorage.removeItem("finance-tracker-workspace-img");
+      const customBanner = localStorage.getItem("finance-tracker-custom-workspace-banner");
+      if (customBanner) {
+        setWorkspaceImage(customBanner);
+      } else {
+        setWorkspaceImage("/images/workspace-default.jpg");
+      }
     }
-  }, [settings.avatarUrl]);
+  }, []);
 
-  const handleChangePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const compressed = await compressImage(file, 1200, 0.88);
-      setWorkspaceImage(compressed);
-      updateSettings({ avatarUrl: compressed });
-      if (typeof window !== "undefined") {
-        localStorage.setItem("finance-tracker-workspace-img", compressed);
-      }
-      toast({ variant: "success", title: "Foto Diubah", description: "Foto workspace berhasil diperbarui dan tersimpan." });
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (result) {
+          setWorkspaceImage(result);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("finance-tracker-custom-workspace-banner", result);
+          }
+          toast({ variant: "success", title: "Foto Diubah", description: "Foto workspace berhasil diperbarui dalam kualitas HD." });
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
