@@ -2,19 +2,19 @@
   "name": "Finance Tracker",
   "short_name": "Finance Tracker",
   "description": "Ruang pencatatan finansial pribadi harian Anda.",
-  "start_url": "./",
+  "start_url": "/finance-tracker-v2/",
   "display": "standalone",
   "background_color": "#080D16",
   "theme_color": "#080D16",
   "icons": [
     {
-      "src": "apple-touch-icon.png",
+      "src": "/finance-tracker-v2/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "logo.png",
+      "src": "/finance-tracker-v2/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

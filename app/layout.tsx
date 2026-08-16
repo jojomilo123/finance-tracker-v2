@@ -5,16 +5,18 @@ import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const basePath = process.env.NODE_ENV === "production" ? "/finance-tracker-v2" : "";
+
 export const metadata: Metadata = {
   title: "Finance Tracker",
   description: "Aplikasi pencatatan keuangan pribadi lokal. Catat pemasukan, pengeluaran, anggaran, dan target finansial Anda.",
-  manifest: "/manifest.json",
+  manifest: `${basePath}/manifest.json`,
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
+    icon: `${basePath}/logo.png`,
+    shortcut: `${basePath}/logo.png`,
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180" },
-      { url: "/logo.png" },
+      { url: `${basePath}/apple-touch-icon.png`, sizes: "180x180" },
+      { url: `${basePath}/logo.png` },
     ],
   },
   appleWebApp: {
@@ -32,10 +34,13 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
-        <link rel="icon" type="image/png" href="/logo.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href={`${basePath}/apple-touch-icon.png`} />
+        <link rel="apple-touch-icon-precomposed" href={`${basePath}/apple-touch-icon.png`} />
+        <link rel="apple-touch-icon" sizes="152x152" href={`${basePath}/apple-touch-icon.png`} />
+        <link rel="apple-touch-icon" sizes="167x167" href={`${basePath}/apple-touch-icon.png`} />
+        <link rel="icon" type="image/png" href={`${basePath}/logo.png`} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Finance Tracker" />
       </head>
       <body className={inter.className}>
