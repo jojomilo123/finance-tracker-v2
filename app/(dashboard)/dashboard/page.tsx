@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const { transactions, accounts, budgets, settings, updateSettings, addTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [workspaceImage, setWorkspaceImage] = React.useState("/images/cozy-desk.png");
+  const [workspaceImage, setWorkspaceImage] = React.useState("/images/workspace-default.jpg");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
