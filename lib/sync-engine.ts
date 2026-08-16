@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from "./supabase";
+import { getSupabase, isSupabaseConfigured } from "./supabase";
 import {
   useTransactionStore,
   TransactionRecord,
@@ -14,9 +14,10 @@ import {
 let isSubscribed = false;
 
 export async function initRealtimeSync() {
-  if (!isSupabaseConfigured || !supabase || isSubscribed) return;
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client || isSubscribed) return;
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
   isSubscribed = true;
@@ -27,7 +28,7 @@ export async function initRealtimeSync() {
   }
 
   // Subscribe to Realtime DB events for this user
-  supabase
+  client
     .channel("finance-tracker-realtime")
     .on("postgres_changes", { event: "*", schema: "public", table: "user_transactions" }, (payload: any) => {
       handleTransactionRealtime(payload);
@@ -43,7 +44,7 @@ export async function initRealtimeSync() {
 }
 
 async function handleOnlineSync() {
-  if (!isSupabaseConfigured || !supabase) return;
+  if (!isSupabaseConfigured()) return;
   await pullAllRemoteData();
 }
 
@@ -70,11 +71,12 @@ function handleTransactionRealtime(payload: any) {
 }
 
 export async function pushTransactionToRemote(tx: TransactionRecord) {
-  if (!isSupabaseConfigured || !supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  await supabase.from("user_transactions").upsert({
+  await client.from("user_transactions").upsert({
     id: tx.id,
     user_id: session.user.id,
     title: tx.title,
@@ -94,19 +96,21 @@ export async function pushTransactionToRemote(tx: TransactionRecord) {
 }
 
 export async function deleteTransactionFromRemote(id: string) {
-  if (!isSupabaseConfigured || !supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  await supabase.from("user_transactions").delete().eq("id", id).eq("user_id", session.user.id);
+  await client.from("user_transactions").delete().eq("id", id).eq("user_id", session.user.id);
 }
 
 export async function pushSettingsToRemote(settings: SettingsRecord) {
-  if (!isSupabaseConfigured || !supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  await supabase.from("user_settings").upsert({
+  await client.from("user_settings").upsert({
     user_id: session.user.id,
     name: settings.name,
     email: settings.email,
@@ -117,11 +121,12 @@ export async function pushSettingsToRemote(settings: SettingsRecord) {
 }
 
 export async function pushAccountToRemote(acc: AccountRecord) {
-  if (!isSupabaseConfigured || !supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  await supabase.from("user_accounts").upsert({
+  await client.from("user_accounts").upsert({
     id: acc.id,
     user_id: session.user.id,
     name: acc.name,
@@ -134,12 +139,13 @@ export async function pushAccountToRemote(acc: AccountRecord) {
 }
 
 export async function pullAllRemoteData() {
-  if (!isSupabaseConfigured || !supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
   // 1. Transactions
-  const { data: remoteTx } = await supabase
+  const { data: remoteTx } = await client
     .from("user_transactions")
     .select("*")
     .eq("user_id", session.user.id)
@@ -149,7 +155,7 @@ export async function pullAllRemoteData() {
     const mapped = remoteTx.map(mapRowToTransaction);
     useTransactionStore.setState({ transactions: mapped });
   } else {
-    // If remote DB has no transactions yet, seed existing local transactions to remote
+    // Seed existing local transactions to remote if remote DB is empty
     const localStore = useTransactionStore.getState();
     if (localStore.transactions.length > 0) {
       for (const t of localStore.transactions) {
@@ -167,11 +173,12 @@ export async function pullAllRemoteData() {
 }
 
 async function pullRemoteAccounts() {
-  if (!supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  const { data } = await supabase.from("user_accounts").select("*").eq("user_id", session.user.id);
+  const { data } = await client.from("user_accounts").select("*").eq("user_id", session.user.id);
   if (data && data.length > 0) {
     const accounts: AccountRecord[] = data.map((r: any) => ({
       id: r.id,
@@ -186,11 +193,12 @@ async function pullRemoteAccounts() {
 }
 
 async function pullRemoteBudgets() {
-  if (!supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  const { data } = await supabase.from("user_budgets").select("*").eq("user_id", session.user.id);
+  const { data } = await client.from("user_budgets").select("*").eq("user_id", session.user.id);
   if (data && data.length > 0) {
     const budgets: BudgetRecord[] = data.map((r: any) => ({
       id: r.id,
@@ -204,11 +212,12 @@ async function pullRemoteBudgets() {
 }
 
 async function pullRemoteGoals() {
-  if (!supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  const { data } = await supabase.from("user_goals").select("*").eq("user_id", session.user.id);
+  const { data } = await client.from("user_goals").select("*").eq("user_id", session.user.id);
   if (data && data.length > 0) {
     const goals: GoalRecord[] = data.map((r: any) => ({
       id: r.id,
@@ -223,11 +232,12 @@ async function pullRemoteGoals() {
 }
 
 async function pullRemoteSettings() {
-  if (!supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  const client = getSupabase();
+  if (!client) return;
+  const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  const { data } = await supabase.from("user_settings").select("*").eq("user_id", session.user.id).single();
+  const { data } = await client.from("user_settings").select("*").eq("user_id", session.user.id).single();
   if (data) {
     const settings: SettingsRecord = {
       name: data.name,

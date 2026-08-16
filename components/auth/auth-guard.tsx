@@ -1,28 +1,46 @@
 "use client";
 
 import * as React from "react";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured, setSupabaseCredentials, getSupabaseCredentials } from "@/lib/supabase";
 import { initRealtimeSync } from "@/lib/sync-engine";
-import { Lock, Sparkles, LogOut } from "lucide-react";
+import { Lock, Sparkles, Database, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
+  const [showConfigModal, setShowConfigModal] = React.useState(false);
+
+  // Setup credentials state
+  const [setupUrl, setSetupUrl] = React.useState("");
+  const [setupKey, setSetupKey] = React.useState("");
+
+  // Login credentials state
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [isSignUpMode, setIsSignUpMode] = React.useState(false);
+  const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) {
-      // Offline / Local Mode (no Supabase env configured)
-      setIsAuthenticated(true);
+    const configured = isSupabaseConfigured();
+    const client = getSupabase();
+
+    if (!configured || !client) {
+      // Pre-fill setup inputs if previously saved
+      const current = getSupabaseCredentials();
+      setSetupUrl(current.url);
+      setSetupKey(current.key);
+      setShowConfigModal(true);
+      setIsAuthenticated(false);
       return;
     }
 
+    setShowConfigModal(false);
+
     // Check active session
-    supabase.auth.getSession().then((res: { data: { session: any } }) => {
+    client.auth.getSession().then((res: { data: { session: any } }) => {
       if (res.data.session) {
         setIsAuthenticated(true);
         initRealtimeSync();
@@ -31,7 +49,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: string, session: any) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event: string, session: any) => {
       if (session) {
         setIsAuthenticated(true);
         initRealtimeSync();
@@ -43,18 +61,39 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const [isSignUpMode, setIsSignUpMode] = React.useState(false);
-  const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
+  const handleSaveSetup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setupUrl || !setupKey) return;
+
+    setSupabaseCredentials(setupUrl, setupKey);
+    const client = getSupabase();
+    if (client) {
+      setShowConfigModal(false);
+      client.auth.getSession().then((res: { data: { session: any } }) => {
+        if (res.data.session) {
+          setIsAuthenticated(true);
+          initRealtimeSync();
+        } else {
+          setIsAuthenticated(false);
+        }
+      });
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!supabase) return;
+    const client = getSupabase();
+    if (!client) {
+      setShowConfigModal(true);
+      return;
+    }
+
     setLoading(true);
     setErrorMsg(null);
     setSuccessMsg(null);
 
     if (isSignUpMode) {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await client.auth.signUp({
         email,
         password,
       });
@@ -65,11 +104,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         setIsAuthenticated(true);
         initRealtimeSync();
       } else {
-        setSuccessMsg("Akun pemilik berhasil dibuat! Jika verifikasi email aktif di Supabase, silakan periksa inbox email Anda atau matikan 'Confirm email' di Supabase Dashboard.");
+        setSuccessMsg("Akun pemilik berhasil dibuat! Silakan coba login sekarang.");
         setIsSignUpMode(false);
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await client.auth.signInWithPassword({
         email,
         password,
       });
@@ -89,6 +128,52 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             <Sparkles className="h-6 w-6 text-emerald-400" />
           </div>
           <p className="text-xs text-muted-foreground font-medium">Memuat Finance Tracker...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (showConfigModal || !isSupabaseConfigured()) {
+    return (
+      <div className="min-h-screen bg-[#080D16] text-[#F5F7FA] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#121C2A] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-3 rounded-2xl bg-blue-500/10 text-blue-400 mb-1 border border-blue-500/20">
+              <Database className="h-6 w-6" />
+            </div>
+            <h1 className="text-xl font-bold text-white tracking-tight">Setup Supabase Key</h1>
+            <p className="text-xs text-muted-foreground">
+              Masukkan Project URL dan Anon Key dari Supabase Dashboard Anda untuk menghubungkan HP & iPad.
+            </p>
+          </div>
+
+          <form onSubmit={handleSaveSetup} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Project URL Supabase</label>
+              <Input
+                type="url"
+                required
+                placeholder="https://reacitzacwbaaquwbsf.supabase.co"
+                value={setupUrl}
+                onChange={(e) => setSetupUrl(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Anon / Publishable Key</label>
+              <Input
+                type="password"
+                required
+                placeholder="eyJhbGciOi..."
+                value={setupKey}
+                onChange={(e) => setSetupKey(e.target.value)}
+              />
+            </div>
+
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl h-10 font-semibold">
+              Simpan & Hubungkan Supabase
+            </Button>
+          </form>
         </div>
       </div>
     );
@@ -176,6 +261,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             <Button type="submit" isLoading={loading} className="w-full bg-[#10b981] hover:bg-[#10b981]/90 text-white rounded-xl h-10 font-semibold">
               {isSignUpMode ? "Buat Akun Pemilik Baru" : "Masuk ke Workspace"}
             </Button>
+
+            <button
+              type="button"
+              onClick={() => setShowConfigModal(true)}
+              className="w-full text-center text-[11px] text-muted-foreground hover:text-white pt-2 transition-colors flex items-center justify-center space-x-1"
+            >
+              <Key className="h-3 w-3" />
+              <span>Ubah Key Supabase</span>
+            </button>
           </form>
         </div>
       </div>
