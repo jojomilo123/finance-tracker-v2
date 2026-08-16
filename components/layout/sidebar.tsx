@@ -35,6 +35,23 @@ export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
+  // Persist sidebar collapsed state across page navigations on desktop/iPad
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("finance-tracker-sidebar-collapsed");
+      if (saved === "true") {
+        setCollapsed(true);
+      }
+    }
+  }, []);
+
+  const handleToggleCollapse = (val: boolean) => {
+    setCollapsed(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("finance-tracker-sidebar-collapsed", String(val));
+    }
+  };
+
   const navSections = [
     {
       label: "Menu Utama",
@@ -91,24 +108,24 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop Sidebar (md+) */}
+      {/* Desktop / iPad Sidebar (md+) */}
       <aside
         className={cn(
-          "hidden md:flex flex-shrink-0 flex-col bg-[#0D1420] border-r border-white/5 min-h-screen z-30 transition-all duration-300",
+          "hidden md:flex flex-shrink-0 flex-col bg-[#0D1420] border-r border-white/5 min-h-screen z-30 transition-all duration-300 ease-out",
           collapsed ? "w-[68px]" : "w-[220px]"
         )}
       >
         <div className={cn("flex items-center px-4 py-5", collapsed ? "justify-center" : "justify-between")}>
-          <Link href="/dashboard" className="flex items-center space-x-2">
-            <div className="p-2 rounded-xl bg-white text-[#080D16] shadow-md">
+          <Link href="/dashboard" className="flex items-center space-x-2 group">
+            <div className="p-2 rounded-xl bg-white text-[#080D16] shadow-md group-hover:scale-105 transition-transform duration-150">
               <Sparkles className="h-4 w-4 fill-current" />
             </div>
             {!collapsed && <span className="text-sm font-bold text-white tracking-tight">Finance Tracker</span>}
           </Link>
           {!collapsed && (
             <button
-              onClick={() => setCollapsed(true)}
-              className="p-1.5 rounded-lg text-[#AAB5C5] hover:text-white hover:bg-white/5 transition-colors"
+              onClick={() => handleToggleCollapse(true)}
+              className="p-1.5 rounded-lg text-[#AAB5C5] hover:text-white hover:bg-white/5 active:scale-95 transition-all duration-150"
               title="Collapse sidebar"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -118,8 +135,8 @@ export function Sidebar() {
 
         {collapsed && (
           <button
-            onClick={() => setCollapsed(false)}
-            className="mx-auto mb-2 p-1.5 rounded-lg text-[#AAB5C5] hover:text-white hover:bg-white/5 transition-colors"
+            onClick={() => handleToggleCollapse(false)}
+            className="mx-auto mb-2 p-1.5 rounded-lg text-[#AAB5C5] hover:text-white hover:bg-white/5 active:scale-95 transition-all duration-150"
             title="Expand sidebar"
           >
             <ChevronRight className="h-4 w-4" />
@@ -146,17 +163,17 @@ export function Sidebar() {
                       href={item.href}
                       title={item.title}
                       className={cn(
-                        "flex items-center rounded-xl transition-all duration-200 group relative",
+                        "flex items-center rounded-xl transition-all duration-150 ease-out group relative active:scale-[0.98]",
                         collapsed ? "justify-center p-2.5 mx-auto" : "px-3 py-2 space-x-3",
                         isActive
-                          ? "bg-[#10b981]/15 text-[#10b981]"
+                          ? "bg-[#10b981]/15 text-[#10b981] font-semibold"
                           : "text-[#AAB5C5] hover:text-white hover:bg-white/5"
                       )}
                     >
                       {isActive && (
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#10b981] rounded-r-full" />
                       )}
-                      <Icon className="h-[18px] w-[18px] shrink-0" />
+                      <Icon className="h-[18px] w-[18px] shrink-0 group-hover:scale-105 transition-transform duration-150" />
                       {!collapsed && (
                         <span className="text-[13px] font-medium truncate">{item.title}</span>
                       )}
@@ -181,7 +198,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all min-w-[56px] min-h-[44px]",
+                "flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all duration-150 active:scale-95 min-w-[56px] min-h-[44px]",
                 isActive
                   ? "text-[#10b981] bg-[#10b981]/15"
                   : "text-[#AAB5C5] hover:text-white"
@@ -197,7 +214,7 @@ export function Sidebar() {
         <button
           onClick={() => setIsMobileMenuOpen(true)}
           className={cn(
-            "flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all min-w-[56px] min-h-[44px]",
+            "flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all duration-150 active:scale-95 min-w-[56px] min-h-[44px]",
             isMobileMenuOpen
               ? "text-[#10b981] bg-[#10b981]/15"
               : "text-[#AAB5C5] hover:text-white"
@@ -233,7 +250,7 @@ export function Sidebar() {
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
-                          "flex items-center space-x-2.5 p-3 rounded-xl border border-white/5 transition-all text-xs font-medium",
+                          "flex items-center space-x-2.5 p-3 rounded-xl border border-white/5 transition-all duration-150 active:scale-95 text-xs font-medium",
                           isActive
                             ? "bg-[#10b981]/20 border-[#10b981]/40 text-[#10b981]"
                             : "bg-[#121C2A] text-[#F5F7FA] hover:bg-white/5"
@@ -255,7 +272,7 @@ export function Sidebar() {
                   setIsMobileMenuOpen(false);
                   setShowLogoutConfirm(true);
                 }}
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-xs font-medium hover:bg-red-500/10 transition-all"
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-xs font-medium hover:bg-red-500/10 active:scale-[0.98] transition-all duration-150"
               >
                 <LogOut className="h-4 w-4" /> Keluar Akun / Disconnect
               </button>
