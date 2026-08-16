@@ -15,14 +15,17 @@ const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
   ProgressProps
 >(({ className, value = 0, autoColor = true, indicatorClassName, ...props }, ref) => {
+  const safeValue = typeof value === "number" && !isNaN(value) ? Math.max(0, value) : 0;
+  const clampedPercentage = Math.min(safeValue, 100);
+
   let colorClass = "bg-primary";
 
   if (autoColor) {
-    if (value < 70) {
+    if (safeValue < 70) {
       colorClass = "bg-emerald-500";
-    } else if (value < 85) {
+    } else if (safeValue < 85) {
       colorClass = "bg-amber-500";
-    } else if (value <= 100) {
+    } else if (safeValue <= 100) {
       colorClass = "bg-orange-500";
     } else {
       colorClass = "bg-red-500";
@@ -44,7 +47,7 @@ const Progress = React.forwardRef<
           colorClass,
           indicatorClassName
         )}
-        style={{ transform: `translateX(-${100 - Math.min(value, 100)}%)` }}
+        style={{ transform: `translateX(-${100 - clampedPercentage}%)` }}
       />
     </ProgressPrimitive.Root>
   );

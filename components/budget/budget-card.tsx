@@ -27,9 +27,11 @@ export function BudgetCard({
   onChangeBudget,
   className,
 }: BudgetCardProps) {
-  const percentage = budgetAmount > 0 ? Math.round((spentAmount / budgetAmount) * 100) : 0;
-  const remaining = budgetAmount - spentAmount;
-  const isOverBudget = spentAmount > budgetAmount && budgetAmount > 0;
+  const safeBudget = typeof budgetAmount === "number" && !isNaN(budgetAmount) ? Math.max(0, budgetAmount) : 0;
+  const safeSpent = typeof spentAmount === "number" && !isNaN(spentAmount) ? Math.max(0, spentAmount) : 0;
+  const percentage = safeBudget > 0 ? Math.round((safeSpent / safeBudget) * 100) : 0;
+  const remaining = safeBudget - safeSpent;
+  const isOverBudget = safeSpent > safeBudget && safeBudget > 0;
   const isNearLimit = percentage >= 85 && percentage <= 100;
 
   // Forecast projection

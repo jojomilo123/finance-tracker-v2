@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -18,17 +17,20 @@ import {
   BarChart3,
   PieChart,
   Target,
-  RefreshCcw,
   CreditCard as SubIcon,
   Landmark,
   Settings,
   ChevronLeft,
   ChevronRight,
+  Menu as MenuIcon,
+  X,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const navSections = [
     {
@@ -67,15 +69,11 @@ export function Sidebar() {
     },
   ];
 
-  const allItems = navSections.flatMap((s) => s.items);
-
-  // Mobile bottom bar: show 5 most important
-  const mobileItems = [
+  const mobileBottomItems = [
     { title: "Home", href: "/dashboard", icon: Home },
     { title: "Transaksi", href: "/transactions", icon: ArrowLeftRight },
-    { title: "Income", href: "/income", icon: TrendingUp },
-    { title: "Expenses", href: "/expenses", icon: TrendingDown },
-    { title: "Settings", href: "/settings", icon: Settings },
+    { title: "Analisis", href: "/analytics", icon: PieChart },
+    { title: "Anggaran", href: "/budgets", icon: PiggyBank },
   ];
 
   return (
@@ -162,7 +160,7 @@ export function Sidebar() {
 
       {/* Mobile Bottom Navigation (< md) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0D1420]/95 backdrop-blur-md border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl">
-        {mobileItems.map((item) => {
+        {mobileBottomItems.map((item) => {
           const Icon = item.icon;
           const isActive =
             pathname === item.href || (item.href === "/dashboard" && pathname === "/");
@@ -183,7 +181,59 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Mobile Menu Trigger Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all min-w-[52px] min-h-[44px] text-[#AAB5C5] hover:text-white"
+        >
+          <MenuIcon className="h-5 w-5 mb-0.5" />
+          <span className="truncate">Menu</span>
+        </button>
       </div>
+
+      {/* Full Mobile Menu Modal Drawer */}
+      <Dialog open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <DialogContent className="sm:max-w-md bg-[#0D1420] text-white border-white/10 max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-white/10">
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-emerald-400" /> Navigasi Lengkap Aplikasi
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {navSections.map((sec) => (
+              <div key={sec.label} className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#AAB5C5]/70 px-1">
+                  {sec.label}
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {sec.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center space-x-2.5 p-3 rounded-xl border border-white/5 transition-all text-xs font-medium",
+                          isActive
+                            ? "bg-[#10b981]/20 border-[#10b981]/40 text-[#10b981]"
+                            : "bg-[#121C2A] text-[#F5F7FA] hover:bg-white/5"
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0 text-emerald-400" />
+                        <span className="truncate">{item.title}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
