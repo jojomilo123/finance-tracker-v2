@@ -131,7 +131,7 @@ export function TransactionForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 text-left">
       {/* Type Switcher Tabs (Hidden if locked) */}
       {!lockType && (
         <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-muted/60">
@@ -304,11 +304,11 @@ export function TransactionForm({
         </div>
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4 border-t border-border">
-        <Button type="button" variant="outline" onClick={onCancel}>
+      <div className="sticky -bottom-4 sm:-bottom-6 bg-background/95 backdrop-blur-sm pt-3 sm:pt-4 pb-2 border-t border-border flex items-center justify-end space-x-2 z-10">
+        <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl h-9 sm:h-10 text-xs sm:text-sm">
           Batal
         </Button>
-        <Button type="submit" isLoading={isLoading}>
+        <Button type="submit" isLoading={isLoading} className="rounded-xl h-9 sm:h-10 text-xs sm:text-sm bg-[#10b981] hover:bg-[#10b981]/90 text-white font-medium">
           Simpan Transaksi
         </Button>
       </div>

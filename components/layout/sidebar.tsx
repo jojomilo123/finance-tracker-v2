@@ -89,15 +89,9 @@ export function Sidebar() {
       >
         {/* Header */}
         <div className={cn("flex items-center px-4 py-5", collapsed ? "justify-center" : "justify-between")}>
-          <Link href="/dashboard" className="flex items-center space-x-2.5">
-            <div className="relative h-8 w-8 rounded-xl overflow-hidden shadow-md shrink-0 border border-white/10">
-              <Image
-                src="/logo.png"
-                alt="Finance Tracker Logo"
-                width={32}
-                height={32}
-                className="object-cover rounded-xl"
-              />
+          <Link href="/dashboard" className="flex items-center space-x-2">
+            <div className="p-2 rounded-xl bg-white text-[#080D16] shadow-md">
+              <Sparkles className="h-4 w-4 fill-current" />
             </div>
             {!collapsed && <span className="text-sm font-bold text-white tracking-tight">Finance Tracker</span>}
           </Link>
