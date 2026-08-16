@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { pushTransactionToRemote, deleteTransactionFromRemote, pushSettingsToRemote } from "@/lib/sync-engine";
+import {
+  pushTransactionToRemote,
+  deleteTransactionFromRemote,
+  pushSettingsToRemote,
+  pushAccountToRemote,
+  pushBudgetToRemote,
+  pushGoalToRemote,
+} from "@/lib/sync-engine";
 
 export interface TransactionRecord {
   id: string;
@@ -235,26 +242,43 @@ export const useTransactionStore = create<TransactionState>()(
       addAccount: (accData) => {
         const newAcc: AccountRecord = { ...accData, id: `acc-${Date.now()}` };
         set((state) => ({ accounts: [...state.accounts, newAcc] }));
+        pushAccountToRemote(newAcc).catch(() => {});
       },
 
       deleteAccount: (id) => set((state) => ({ accounts: state.accounts.filter((a) => a.id !== id) })),
 
-      updateBudget: (id, budgetAmount) => set((state) => ({
-        budgets: state.budgets.map((b) => b.id === id ? { ...b, budgetAmount } : b),
-      })),
+      updateBudget: (id, budgetAmount) => {
+        set((state) => {
+          const updated = state.budgets.map((b) => b.id === id ? { ...b, budgetAmount } : b);
+          const target = updated.find((b) => b.id === id);
+          if (target) pushBudgetToRemote(target).catch(() => {});
+          return { budgets: updated };
+        });
+      },
 
-      setBudgets: (budgets) => set({ budgets }),
+      setBudgets: (budgets) => {
+        set({ budgets });
+        for (const b of budgets) {
+          pushBudgetToRemote(b).catch(() => {});
+        }
+      },
 
       addGoal: (goalData) => {
         const newGoal: GoalRecord = { ...goalData, id: `g-${Date.now()}` };
         set((state) => ({ goals: [...state.goals, newGoal] }));
+        pushGoalToRemote(newGoal).catch(() => {});
       },
 
       deleteGoal: (id) => set((state) => ({ goals: state.goals.filter((g) => g.id !== id) })),
 
-      contributeToGoal: (id, amount) => set((state) => ({
-        goals: state.goals.map((g) => g.id === id ? { ...g, currentSaved: g.currentSaved + amount } : g),
-      })),
+      contributeToGoal: (id, amount) => {
+        set((state) => {
+          const updated = state.goals.map((g) => g.id === id ? { ...g, currentSaved: g.currentSaved + amount } : g);
+          const target = updated.find((g) => g.id === id);
+          if (target) pushGoalToRemote(target).catch(() => {});
+          return { goals: updated };
+        });
+      },
 
       addAsset: (assetData) => {
         const newAsset: NetWorthAsset = { ...assetData, id: `a-${Date.now()}` };

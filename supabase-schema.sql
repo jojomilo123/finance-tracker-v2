@@ -4,7 +4,7 @@
 
 -- 1. USER TRANSACTIONS TABLE
 CREATE TABLE IF NOT EXISTS public.user_transactions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     amount NUMERIC NOT NULL,

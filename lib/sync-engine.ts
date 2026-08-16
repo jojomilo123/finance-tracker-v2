@@ -76,7 +76,7 @@ export async function pushTransactionToRemote(tx: TransactionRecord) {
   const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  await client.from("user_transactions").upsert({
+  const { error } = await client.from("user_transactions").upsert({
     id: tx.id,
     user_id: session.user.id,
     title: tx.title,
@@ -93,6 +93,19 @@ export async function pushTransactionToRemote(tx: TransactionRecord) {
     note: tx.note || null,
     updated_at: new Date().toISOString(),
   });
+
+  if (error) {
+    console.error("Supabase Transaction Push Error:", error.message);
+  }
+
+  // Also push updated account balances & budgets
+  const store = useTransactionStore.getState();
+  for (const acc of store.accounts) {
+    await pushAccountToRemote(acc);
+  }
+  for (const b of store.budgets) {
+    await pushBudgetToRemote(b);
+  }
 }
 
 export async function deleteTransactionFromRemote(id: string) {
@@ -102,6 +115,15 @@ export async function deleteTransactionFromRemote(id: string) {
   if (!session) return;
 
   await client.from("user_transactions").delete().eq("id", id).eq("user_id", session.user.id);
+
+  // Sync balances & budgets
+  const store = useTransactionStore.getState();
+  for (const acc of store.accounts) {
+    await pushAccountToRemote(acc);
+  }
+  for (const b of store.budgets) {
+    await pushBudgetToRemote(b);
+  }
 }
 
 export async function pushSettingsToRemote(settings: SettingsRecord) {
@@ -134,6 +156,41 @@ export async function pushAccountToRemote(acc: AccountRecord) {
     balance: acc.balance,
     color: acc.color || null,
     icon: acc.icon || null,
+    updated_at: new Date().toISOString(),
+  });
+}
+
+export async function pushBudgetToRemote(b: BudgetRecord) {
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) return;
+
+  await client.from("user_budgets").upsert({
+    id: b.id,
+    user_id: session.user.id,
+    category_name: b.categoryName,
+    category_color: b.categoryColor,
+    budget_amount: b.budgetAmount,
+    spent_amount: b.spentAmount,
+    updated_at: new Date().toISOString(),
+  });
+}
+
+export async function pushGoalToRemote(g: GoalRecord) {
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) return;
+
+  await client.from("user_goals").upsert({
+    id: g.id,
+    user_id: session.user.id,
+    name: g.name,
+    target_amount: g.targetAmount,
+    current_saved: g.currentSaved,
+    target_date: g.targetDate,
+    color: g.color || null,
     updated_at: new Date().toISOString(),
   });
 }
@@ -189,6 +246,12 @@ async function pullRemoteAccounts() {
       icon: r.icon,
     }));
     useTransactionStore.setState({ accounts });
+  } else {
+    // Seed local accounts to remote
+    const localStore = useTransactionStore.getState();
+    for (const acc of localStore.accounts) {
+      await pushAccountToRemote(acc);
+    }
   }
 }
 
@@ -208,6 +271,12 @@ async function pullRemoteBudgets() {
       spentAmount: Number(r.spent_amount),
     }));
     useTransactionStore.setState({ budgets });
+  } else {
+    // Seed local budgets to remote
+    const localStore = useTransactionStore.getState();
+    for (const b of localStore.budgets) {
+      await pushBudgetToRemote(b);
+    }
   }
 }
 
@@ -228,6 +297,12 @@ async function pullRemoteGoals() {
       color: r.color,
     }));
     useTransactionStore.setState({ goals });
+  } else {
+    // Seed local goals to remote
+    const localStore = useTransactionStore.getState();
+    for (const g of localStore.goals) {
+      await pushGoalToRemote(g);
+    }
   }
 }
 
