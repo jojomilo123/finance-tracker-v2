@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { pushTransactionToRemote, deleteTransactionFromRemote } from "@/lib/sync-engine";
 
 export interface TransactionRecord {
   id: string;
@@ -180,6 +181,7 @@ export const useTransactionStore = create<TransactionState>()(
           });
           return { transactions: [newTx, ...state.transactions], accounts: updatedAccounts, budgets: updatedBudgets };
         });
+        pushTransactionToRemote(newTx).catch(() => {});
       },
 
       deleteTransaction: (id) => {
@@ -204,10 +206,11 @@ export const useTransactionStore = create<TransactionState>()(
             return b;
           }),
         });
+        deleteTransactionFromRemote(id).catch(() => {});
         return deleted;
       },
 
-      restoreTransaction: (tx) =>
+      restoreTransaction: (tx) => {
         set((state) => {
           const updatedAccounts = state.accounts.map((acc) => {
             if (tx.transactionType === "EXPENSE" && acc.id === tx.accountId) return { ...acc, balance: acc.balance - tx.amount };
@@ -225,7 +228,9 @@ export const useTransactionStore = create<TransactionState>()(
             return b;
           });
           return { transactions: [tx, ...state.transactions], accounts: updatedAccounts, budgets: updatedBudgets };
-        }),
+        });
+        pushTransactionToRemote(tx).catch(() => {});
+      },
 
       addAccount: (accData) => {
         const newAcc: AccountRecord = { ...accData, id: `acc-${Date.now()}` };

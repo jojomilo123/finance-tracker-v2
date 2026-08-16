@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,7 +45,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Finance Tracker" />
       </head>
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <AuthGuard>{children}</AuthGuard>
+        </Providers>
       </body>
     </html>
   );
