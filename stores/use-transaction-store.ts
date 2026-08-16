@@ -94,7 +94,9 @@ interface TransactionState {
   liabilities: NetWorthLiability[];
   subscriptions: SubscriptionRecord[];
   settings: SettingsRecord;
+  sidebarCollapsed: boolean;
 
+  setSidebarCollapsed: (collapsed: boolean) => void;
   addTransaction: (tx: Omit<TransactionRecord, "id">) => void;
   deleteTransaction: (id: string) => TransactionRecord | undefined;
   restoreTransaction: (tx: TransactionRecord) => void;
@@ -169,6 +171,9 @@ export const useTransactionStore = create<TransactionState>()(
       liabilities: INITIAL_LIABILITIES,
       subscriptions: INITIAL_SUBSCRIPTIONS,
       settings: { name: "Pengguna Lokal", email: "user@local.app", timezone: "Asia/Jakarta", currency: "IDR" },
+      sidebarCollapsed: false,
+
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
       addTransaction: (txData) => {
         const newTx: TransactionRecord = { ...txData, id: `tx-${Date.now()}` };

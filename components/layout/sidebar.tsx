@@ -29,27 +29,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { getSupabase } from "@/lib/supabase";
 
+import { useTransactionStore } from "@/stores/use-transaction-store";
+
 export function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = React.useState(false);
+  const { sidebarCollapsed: collapsed, setSidebarCollapsed } = useTransactionStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
-  // Persist sidebar collapsed state across page navigations on desktop/iPad
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("finance-tracker-sidebar-collapsed");
-      if (saved === "true") {
-        setCollapsed(true);
-      }
-    }
-  }, []);
-
   const handleToggleCollapse = (val: boolean) => {
-    setCollapsed(val);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("finance-tracker-sidebar-collapsed", String(val));
-    }
+    setSidebarCollapsed(val);
   };
 
   const navSections = [
@@ -111,7 +100,7 @@ export function Sidebar() {
       {/* Desktop / iPad Sidebar (md+) */}
       <aside
         className={cn(
-          "hidden md:flex flex-shrink-0 flex-col bg-[#0D1420] border-r border-white/5 min-h-screen z-30 transition-all duration-300 ease-out",
+          "hidden md:flex flex-shrink-0 flex-col bg-[#0D1420] border-r border-white/5 min-h-screen z-30 transition-[width] duration-300 ease-out",
           collapsed ? "w-[68px]" : "w-[220px]"
         )}
       >

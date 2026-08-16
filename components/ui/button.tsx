@@ -5,19 +5,19 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none disabled:transform-none cursor-pointer select-none active:scale-[0.97]",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors transition-transform duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none disabled:transform-none cursor-pointer select-none touch-manipulation active:scale-[0.97]",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md hover:shadow-primary/20 hover:-translate-y-[1px] active:translate-y-0",
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 [@media(hover:hover)]:hover:shadow-md [@media(hover:hover)]:hover:shadow-primary/20",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-md hover:shadow-destructive/20 hover:-translate-y-[1px] active:translate-y-0",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 [@media(hover:hover)]:hover:shadow-md [@media(hover:hover)]:hover:shadow-destructive/20",
         outline:
-          "border border-input bg-background/50 backdrop-blur-sm shadow-sm hover:bg-accent hover:text-accent-foreground hover:border-white/20 hover:-translate-y-[1px] active:translate-y-0",
+          "border border-input bg-background/50 backdrop-blur-sm shadow-sm hover:bg-accent hover:text-accent-foreground [@media(hover:hover)]:hover:border-white/20",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:-translate-y-[1px] active:translate-y-0",
-        ghost: "hover:bg-accent/80 hover:text-accent-foreground active:scale-[0.97]",
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        ghost: "hover:bg-accent/80 hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline active:scale-100",
       },
       size: {
