@@ -132,16 +132,10 @@ export default function DashboardPage() {
     });
   };
 
-  if (appMode === "VIEWER") {
-    return (
-      <DashboardShell>
-        <ViewerAnalyticsDashboard />
-      </DashboardShell>
-    );
-  }
+  const isViewer = appMode === "VIEWER";
 
   return (
-    <DashboardShell onOpenQuickAdd={() => setIsModalOpen(true)}>
+    <DashboardShell onOpenQuickAdd={isViewer ? undefined : () => setIsModalOpen(true)}>
       <div className="space-y-6 w-full">
         {/* Workspace Main Top Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
@@ -162,14 +156,18 @@ export default function DashboardPage() {
                   <span className="h-2.5 w-2.5 rounded-full bg-[#10b981] animate-pulse" />
                   <span className="text-xs font-semibold text-white/90 tracking-wide">Workspace Active</span>
                 </div>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 rounded-xl bg-black/40 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
-                  title="Ganti Foto Workspace"
-                >
-                  <Camera className="h-4 w-4" />
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleChangePhoto} />
+                {!isViewer && (
+                  <>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-2 rounded-xl bg-black/40 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
+                      title="Ganti Foto Workspace"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleChangePhoto} />
+                  </>
+                )}
               </div>
 
               <div>
@@ -339,87 +337,91 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Bottom Full Width Quick Actions Section */}
-        <div className="p-6 rounded-3xl bg-[#121C2A] border border-white/5 space-y-4">
-          <h3 className="text-sm font-bold text-[#F5F7FA]">Quick Actions</h3>
+        {/* Bottom Full Width Quick Actions Section - Editor Only */}
+        {!isViewer && (
+          <div className="p-6 rounded-3xl bg-[#121C2A] border border-white/5 space-y-4">
+            <h3 className="text-sm font-bold text-[#F5F7FA]">Quick Actions</h3>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Action 1: Add Transaction */}
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="p-5 rounded-2xl bg-[#172131] border border-white/5 hover:border-[#10b981]/50 hover:bg-[#172131]/80 transition-all flex flex-col items-center justify-center space-y-3 group text-center"
-            >
-              <div className="p-4 rounded-2xl bg-[#10b981]/20 text-[#10b981] group-hover:scale-110 transition-transform">
-                <FilePlus className="h-7 w-7" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-[#F5F7FA]">Add Transaction</h4>
-                <p className="text-[10px] text-[#AAB5C5]">Catat pemasukan/pengeluaran</p>
-              </div>
-            </button>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Action 1: Add Transaction */}
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="p-5 rounded-2xl bg-[#172131] border border-white/5 hover:border-[#10b981]/50 hover:bg-[#172131]/80 transition-all flex flex-col items-center justify-center space-y-3 group text-center"
+              >
+                <div className="p-4 rounded-2xl bg-[#10b981]/20 text-[#10b981] group-hover:scale-110 transition-transform">
+                  <FilePlus className="h-7 w-7" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[#F5F7FA]">Add Transaction</h4>
+                  <p className="text-[10px] text-[#AAB5C5]">Catat pemasukan/pengeluaran</p>
+                </div>
+              </button>
 
-            {/* Action 2: View Analytics */}
-            <Link
-              href="/analytics"
-              className="p-5 rounded-2xl bg-[#172131] border border-white/5 hover:border-[#8b5cf6]/50 hover:bg-[#172131]/80 transition-all flex flex-col items-center justify-center space-y-3 group text-center"
-            >
-              <div className="p-4 rounded-2xl bg-[#8b5cf6]/20 text-[#8b5cf6] group-hover:scale-110 transition-transform">
-                <BarChart2 className="h-7 w-7" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-[#F5F7FA]">View Analytics</h4>
-                <p className="text-[10px] text-[#AAB5C5]">Analisis tren & grafik</p>
-              </div>
-            </Link>
+              {/* Action 2: View Analytics */}
+              <Link
+                href="/analytics"
+                className="p-5 rounded-2xl bg-[#172131] border border-white/5 hover:border-[#8b5cf6]/50 hover:bg-[#172131]/80 transition-all flex flex-col items-center justify-center space-y-3 group text-center"
+              >
+                <div className="p-4 rounded-2xl bg-[#8b5cf6]/20 text-[#8b5cf6] group-hover:scale-110 transition-transform">
+                  <BarChart2 className="h-7 w-7" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[#F5F7FA]">View Analytics</h4>
+                  <p className="text-[10px] text-[#AAB5C5]">Analisis tren & grafik</p>
+                </div>
+              </Link>
 
-            {/* Action 3: Manage Goals */}
-            <Link
-              href="/goals"
-              className="p-5 rounded-2xl bg-[#172131] border border-white/5 hover:border-[#f59e0b]/50 hover:bg-[#172131]/80 transition-all flex flex-col items-center justify-center space-y-3 group text-center"
-            >
-              <div className="p-4 rounded-2xl bg-[#f59e0b]/20 text-[#f59e0b] group-hover:scale-110 transition-transform">
-                <Target className="h-7 w-7" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-[#F5F7FA]">Manage Goals</h4>
-                <p className="text-[10px] text-[#AAB5C5]">Target &amp; tabungan impian</p>
-              </div>
-            </Link>
+              {/* Action 3: Manage Goals */}
+              <Link
+                href="/goals"
+                className="p-5 rounded-2xl bg-[#172131] border border-white/5 hover:border-[#f59e0b]/50 hover:bg-[#172131]/80 transition-all flex flex-col items-center justify-center space-y-3 group text-center"
+              >
+                <div className="p-4 rounded-2xl bg-[#f59e0b]/20 text-[#f59e0b] group-hover:scale-110 transition-transform">
+                  <Target className="h-7 w-7" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[#F5F7FA]">Manage Goals</h4>
+                  <p className="text-[10px] text-[#AAB5C5]">Target &amp; tabungan impian</p>
+                </div>
+              </Link>
 
-            {/* Action 4: Manage Accounts / Wallet */}
-            <Link
-              href="/accounts"
-              className="p-5 rounded-2xl bg-[#172131] border border-white/5 hover:border-[#3b82f6]/50 hover:bg-[#172131]/80 transition-all flex flex-col items-center justify-center space-y-3 group text-center"
-            >
-              <div className="p-4 rounded-2xl bg-[#3b82f6]/20 text-[#3b82f6] group-hover:scale-110 transition-transform">
-                <CreditCard className="h-7 w-7" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-[#F5F7FA]">Manage Wallet</h4>
-                <p className="text-[10px] text-[#AAB5C5]">Kelola akun bank & dompet</p>
-              </div>
-            </Link>
+              {/* Action 4: Manage Accounts / Wallet */}
+              <Link
+                href="/accounts"
+                className="p-5 rounded-2xl bg-[#172131] border border-white/5 hover:border-[#3b82f6]/50 hover:bg-[#172131]/80 transition-all flex flex-col items-center justify-center space-y-3 group text-center"
+              >
+                <div className="p-4 rounded-2xl bg-[#3b82f6]/20 text-[#3b82f6] group-hover:scale-110 transition-transform">
+                  <CreditCard className="h-7 w-7" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[#F5F7FA]">Manage Wallet</h4>
+                  <p className="text-[10px] text-[#AAB5C5]">Kelola akun bank & dompet</p>
+                </div>
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Modal Quick Add Transaction */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Catat Transaksi Baru</DialogTitle>
-            <DialogDescription>
-              Tambahkan pengeluaran, pemasukan, atau transfer antar rekening.
-            </DialogDescription>
-          </DialogHeader>
-          <TransactionForm
-            accounts={accounts}
-            categories={COMPREHENSIVE_CATEGORIES}
-            onSubmitSuccess={handleCreateTransaction}
-            onCancel={() => setIsModalOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Modal Quick Add Transaction - Editor Only */}
+      {!isViewer && (
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Catat Transaksi Baru</DialogTitle>
+              <DialogDescription>
+                Tambahkan pengeluaran, pemasukan, atau transfer antar rekening.
+              </DialogDescription>
+            </DialogHeader>
+            <TransactionForm
+              accounts={accounts}
+              categories={COMPREHENSIVE_CATEGORIES}
+              onSubmitSuccess={handleCreateTransaction}
+              onCancel={() => setIsModalOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </DashboardShell>
   );
 }
