@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/use-toast";
 import { useTransactionStore, AccountRecord } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { Plus, AlertTriangle } from "lucide-react";
 import { AccountType } from "@prisma/client";
 
@@ -20,6 +21,14 @@ export default function AccountsPage() {
   const [deletingAccount, setDeletingAccount] = React.useState<AccountRecord | null>(null);
   const [quickEditBalanceAccount, setQuickEditBalanceAccount] = React.useState<AccountRecord | null>(null);
   const [newBalanceVal, setNewBalanceVal] = React.useState<number>(0);
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   const handleCreateAccount = (values: AccountFormValues) => {
     addAccount({
@@ -58,7 +67,7 @@ export default function AccountsPage() {
 
   const totalBalance = accounts.reduce((acc, curr) => acc + curr.balance, 0);
 
-  const isViewer = appMode === "VIEWER";
+  const isViewer = (appMode as string) === "VIEWER";
 
   return (
     <DashboardShell>

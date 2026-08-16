@@ -10,16 +10,25 @@ import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/use-toast";
 import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { formatCurrency } from "@/lib/utils";
 import { Target, Plus, PiggyBank, Award, Trash2 } from "lucide-react";
 
 export default function GoalsPage() {
   const { toast } = useToast();
-  const { goals, addGoal, deleteGoal, contributeToGoal } = useTransactionStore();
+  const { appMode, goals, addGoal, deleteGoal, contributeToGoal } = useTransactionStore();
   const [activeGoalId, setActiveGoalId] = React.useState<string | null>(null);
   const [contributionAmount, setContributionAmount] = React.useState(500000);
   const [isContributeModalOpen, setIsContributeModalOpen] = React.useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   const [newGoalName, setNewGoalName] = React.useState("");
   const [newGoalTarget, setNewGoalTarget] = React.useState(5000000);

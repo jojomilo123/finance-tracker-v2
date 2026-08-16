@@ -38,8 +38,8 @@ export function Navbar({ onOpenSearch, onOpenQuickAdd }: NavbarProps) {
             title="Klik untuk ganti mode (Editor / Viewer)"
             className="flex items-center space-x-1"
           >
-            <Badge variant="outline" className="px-2.5 py-1 text-[11px] border-amber-500/40 text-amber-300 bg-amber-500/10 cursor-pointer hover:bg-amber-500/20 transition-colors">
-              <Eye className="h-3 w-3 mr-1 text-amber-400" /> Viewer Mode (Read-Only)
+            <Badge variant="outline" className="px-2.5 py-1 text-[11px] border-white/10 text-[#AAB5C5] bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+              <Eye className="h-3 w-3 mr-1 text-[#AAB5C5]" /> Viewer Mode
             </Badge>
           </button>
         ) : (

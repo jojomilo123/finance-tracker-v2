@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency, calculateMonthOverMonthChange } from "@/lib/utils";
 import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { TrendingDown, Plus, RotateCcw } from "lucide-react";
 
 export default function ExpensesPage() {
@@ -17,6 +18,14 @@ export default function ExpensesPage() {
   const { transactions, accounts, appMode, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const isViewer = appMode === "VIEWER";
+
+  if (isViewer) {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   const expenseItems = React.useMemo(() => transactions.filter((t) => t.transactionType === "EXPENSE"), [transactions]);
 

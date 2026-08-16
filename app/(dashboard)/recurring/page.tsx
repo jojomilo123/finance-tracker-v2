@@ -6,11 +6,22 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { formatCurrency } from "@/lib/utils";
 import { Repeat, Plus, Calendar, TrendingUp, TrendingDown } from "lucide-react";
 
 export default function RecurringPage() {
   const { toast } = useToast();
+  const { appMode } = useTransactionStore();
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   const rules = [
     {

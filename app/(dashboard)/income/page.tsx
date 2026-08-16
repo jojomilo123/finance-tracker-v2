@@ -10,12 +10,21 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency, calculateMonthOverMonthChange } from "@/lib/utils";
 import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { TrendingUp, Plus, RotateCcw } from "lucide-react";
 
 export default function IncomePage() {
   const { toast } = useToast();
-  const { transactions, accounts, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
+  const { appMode, transactions, accounts, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   const incomeItems = React.useMemo(() => transactions.filter((t) => t.transactionType === "INCOME"), [transactions]);
 

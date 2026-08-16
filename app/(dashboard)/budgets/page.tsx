@@ -9,13 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { formatCurrency } from "@/lib/utils";
 import { PieChart, Sparkles, AlertTriangle, TrendingDown, RotateCcw, CheckCircle2 } from "lucide-react";
 
 export default function BudgetsPage() {
   const { toast } = useToast();
-  const { budgets, transactions, updateBudget, setBudgets } = useTransactionStore();
+  const { appMode, budgets, transactions, updateBudget, setBudgets } = useTransactionStore();
   const [isTemplateModalOpen, setIsTemplateModalOpen] = React.useState(false);
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   // Dynamically compute spentAmount for each budget category based on actual transactions
   const computedBudgets = React.useMemo(() => {

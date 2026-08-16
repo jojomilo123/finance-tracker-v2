@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { Plus, Search, TrendingUp, TrendingDown, ArrowLeftRight, Archive } from "lucide-react";
 import { CategoryType } from "@prisma/client";
 
@@ -44,10 +46,19 @@ const INITIAL_CATEGORIES: DemoCategory[] = [
 
 export default function CategoriesPage() {
   const { toast } = useToast();
+  const { appMode } = useTransactionStore();
   const [categories, setCategories] = React.useState<DemoCategory[]>(INITIAL_CATEGORIES);
   const [activeTab, setActiveTab] = React.useState<string>("EXPENSE");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   const handleCreateCategory = (values: CategoryFormValues) => {
     const newCat: DemoCategory = {

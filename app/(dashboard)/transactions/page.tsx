@@ -10,11 +10,20 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { Plus, Search, Download, RotateCcw } from "lucide-react";
 
 export default function TransactionsPage() {
   const { toast } = useToast();
-  const { transactions, accounts, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
+  const { appMode, transactions, accounts, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState<string>("ALL");

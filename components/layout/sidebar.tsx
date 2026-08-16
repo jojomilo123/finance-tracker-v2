@@ -33,7 +33,7 @@ import { useTransactionStore } from "@/stores/use-transaction-store";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed: collapsed, setSidebarCollapsed } = useTransactionStore();
+  const { appMode, sidebarCollapsed: collapsed, setSidebarCollapsed } = useTransactionStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
@@ -41,49 +41,77 @@ export function Sidebar() {
     setSidebarCollapsed(val);
   };
 
-  const navSections = [
-    {
-      label: "Menu Utama",
-      items: [
-        { title: "Dashboard", href: "/dashboard", icon: Home },
-        { title: "Transactions", href: "/transactions", icon: ArrowLeftRight },
-        { title: "Income", href: "/income", icon: TrendingUp },
-        { title: "Expenses", href: "/expenses", icon: TrendingDown },
-      ],
-    },
-    {
-      label: "Keuangan",
-      items: [
-        { title: "Accounts", href: "/accounts", icon: CreditCard },
-        { title: "Budgets", href: "/budgets", icon: PiggyBank },
-        { title: "Categories", href: "/categories", icon: Tag },
-      ],
-    },
-    {
-      label: "Laporan",
-      items: [
-        { title: "Reports", href: "/reports", icon: BarChart3 },
-        { title: "Analytics", href: "/analytics", icon: PieChart },
-        { title: "Calendar", href: "/calendar", icon: Calendar },
-      ],
-    },
-    {
-      label: "Lainnya",
-      items: [
-        { title: "Goals", href: "/goals", icon: Target },
-        { title: "Subscriptions", href: "/subscriptions", icon: SubIcon },
-        { title: "Net Worth", href: "/net-worth", icon: Landmark },
-        { title: "Settings", href: "/settings", icon: Settings },
-      ],
-    },
-  ];
+  const isViewer = appMode === "VIEWER";
+
+  const navSections = isViewer
+    ? [
+        {
+          label: "Ringkasan Keuangan",
+          items: [
+            { title: "Dashboard Overview", href: "/dashboard", icon: Home },
+            { title: "Laporan", href: "/reports", icon: BarChart3 },
+            { title: "Analytics", href: "/analytics", icon: PieChart },
+            { title: "Kalender Aktivitas", href: "/calendar", icon: Calendar },
+          ],
+        },
+        {
+          label: "Portofolio & Lainnya",
+          items: [
+            { title: "Kekayaan Bersih", href: "/net-worth", icon: Landmark },
+            { title: "Langganan", href: "/subscriptions", icon: SubIcon },
+            { title: "Settings", href: "/settings", icon: Settings },
+          ],
+        },
+      ]
+    : [
+        {
+          label: "Menu Utama",
+          items: [
+            { title: "Dashboard", href: "/dashboard", icon: Home },
+            { title: "Transactions", href: "/transactions", icon: ArrowLeftRight },
+            { title: "Income", href: "/income", icon: TrendingUp },
+            { title: "Expenses", href: "/expenses", icon: TrendingDown },
+          ],
+        },
+        {
+          label: "Keuangan",
+          items: [
+            { title: "Accounts", href: "/accounts", icon: CreditCard },
+            { title: "Budgets", href: "/budgets", icon: PiggyBank },
+            { title: "Categories", href: "/categories", icon: Tag },
+          ],
+        },
+        {
+          label: "Laporan",
+          items: [
+            { title: "Reports", href: "/reports", icon: BarChart3 },
+            { title: "Analytics", href: "/analytics", icon: PieChart },
+            { title: "Calendar", href: "/calendar", icon: Calendar },
+          ],
+        },
+        {
+          label: "Lainnya",
+          items: [
+            { title: "Goals", href: "/goals", icon: Target },
+            { title: "Subscriptions", href: "/subscriptions", icon: SubIcon },
+            { title: "Net Worth", href: "/net-worth", icon: Landmark },
+            { title: "Settings", href: "/settings", icon: Settings },
+          ],
+        },
+      ];
 
   // Streamlined mobile bottom bar: 3 main tabs + Menu
-  const mobileBottomItems = [
-    { title: "Home", href: "/dashboard", icon: Home },
-    { title: "Transaksi", href: "/transactions", icon: ArrowLeftRight },
-    { title: "Laporan", href: "/reports", icon: BarChart3 },
-  ];
+  const mobileBottomItems = isViewer
+    ? [
+        { title: "Dashboard", href: "/dashboard", icon: Home },
+        { title: "Laporan", href: "/reports", icon: BarChart3 },
+        { title: "Net Worth", href: "/net-worth", icon: Landmark },
+      ]
+    : [
+        { title: "Home", href: "/dashboard", icon: Home },
+        { title: "Transaksi", href: "/transactions", icon: ArrowLeftRight },
+        { title: "Laporan", href: "/reports", icon: BarChart3 },
+      ];
 
   const handleLogout = async () => {
     const client = getSupabase();
