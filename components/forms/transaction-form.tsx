@@ -273,7 +273,7 @@ export function TransactionForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">Tanggal</label>
-          <Input {...register("date")} type="date" className="h-10 py-1.5 px-3 text-sm" />
+          <Input {...register("date")} type="date" className="h-10 py-1.5 px-3 text-sm" style={{ height: "40px", minHeight: "40px", maxHeight: "40px", paddingTop: "6px", paddingBottom: "6px", boxSizing: "border-box" }} />
         </div>
 
         {selectedType === "EXPENSE" && (
