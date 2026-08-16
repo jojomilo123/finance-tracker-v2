@@ -22,7 +22,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Menu as MenuIcon,
+  LayoutGrid,
   LogOut,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -33,6 +33,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
   const navSections = [
     {
@@ -71,11 +72,11 @@ export function Sidebar() {
     },
   ];
 
+  // Streamlined mobile bottom bar: 3 main tabs + Menu
   const mobileBottomItems = [
     { title: "Home", href: "/dashboard", icon: Home },
+    { title: "Transaksi", href: "/transactions", icon: ArrowLeftRight },
     { title: "Laporan", href: "/reports", icon: BarChart3 },
-    { title: "Analisis", href: "/analytics", icon: PieChart },
-    { title: "Kalender", href: "/calendar", icon: Calendar },
   ];
 
   const handleLogout = async () => {
@@ -97,7 +98,6 @@ export function Sidebar() {
           collapsed ? "w-[68px]" : "w-[220px]"
         )}
       >
-        {/* Header */}
         <div className={cn("flex items-center px-4 py-5", collapsed ? "justify-center" : "justify-between")}>
           <Link href="/dashboard" className="flex items-center space-x-2">
             <div className="p-2 rounded-xl bg-white text-[#080D16] shadow-md">
@@ -126,7 +126,6 @@ export function Sidebar() {
           </button>
         )}
 
-        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-5">
           {navSections.map((section) => (
             <div key={section.label}>
@@ -170,8 +169,8 @@ export function Sidebar() {
         </nav>
       </aside>
 
-      {/* Mobile Bottom Navigation (< md) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0D1420]/95 backdrop-blur-md border-t border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl">
+      {/* Mobile Bottom Navigation (< md) — clean 4 items only */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0D1420]/95 backdrop-blur-md border-t border-white/10 px-4 py-1.5 flex items-center justify-around shadow-2xl">
         {mobileBottomItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -182,7 +181,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all min-w-[52px] min-h-[44px]",
+                "flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all min-w-[56px] min-h-[44px]",
                 isActive
                   ? "text-[#10b981] bg-[#10b981]/15"
                   : "text-[#AAB5C5] hover:text-white"
@@ -194,29 +193,34 @@ export function Sidebar() {
           );
         })}
 
-        {/* Mobile Menu Trigger Button */}
+        {/* Menu button */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all min-w-[52px] min-h-[44px] text-[#AAB5C5] hover:text-white"
+          className={cn(
+            "flex flex-col items-center justify-center p-1.5 rounded-xl text-[10px] font-medium transition-all min-w-[56px] min-h-[44px]",
+            isMobileMenuOpen
+              ? "text-[#10b981] bg-[#10b981]/15"
+              : "text-[#AAB5C5] hover:text-white"
+          )}
         >
-          <MenuIcon className="h-5 w-5 mb-0.5" />
-          <span className="truncate">Menu</span>
+          <LayoutGrid className="h-5 w-5 mb-0.5" />
+          <span className="truncate">Lainnya</span>
         </button>
       </div>
 
-      {/* Full Mobile Menu Modal Drawer */}
+      {/* Mobile Menu Drawer */}
       <Dialog open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <DialogContent className="sm:max-w-md bg-[#0D1420] text-white border-white/10 max-h-[85vh] overflow-y-auto">
-          <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-white/10">
+          <DialogHeader className="pb-2 border-b border-white/10">
             <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-emerald-400" /> Navigasi Lengkap Aplikasi
+              <Sparkles className="h-4 w-4 text-emerald-400" /> Menu Navigasi
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             {navSections.map((sec) => (
               <div key={sec.label} className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#AAB5C5]/70 px-1">
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#AAB5C5]/60 px-1">
                   {sec.label}
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
@@ -244,17 +248,51 @@ export function Sidebar() {
               </div>
             ))}
 
-            {/* Logout / Disconnect Button inside Mobile Drawer */}
-            <div className="pt-3 border-t border-white/10">
-              <Button
+            {/* Logout at the very bottom, visually separated */}
+            <div className="pt-4 border-t border-white/10">
+              <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
+                  setShowLogoutConfirm(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-xs font-medium hover:bg-red-500/10 transition-all"
+              >
+                <LogOut className="h-4 w-4" /> Keluar Akun / Disconnect
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Logout Double Confirmation Dialog */}
+      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <DialogContent className="sm:max-w-sm bg-[#0D1420] text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-red-400">
+              <LogOut className="h-5 w-5" /> Konfirmasi Keluar
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-[#AAB5C5]">
+              Apakah Anda yakin ingin keluar dari akun? Sesi sinkronisasi perangkat ini akan terputus.
+            </p>
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-xl border-white/10 text-white hover:bg-white/5"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1 rounded-xl bg-red-600 hover:bg-red-500"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
                   handleLogout();
                 }}
-                variant="destructive"
-                className="w-full rounded-xl gap-2 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white"
               >
-                <LogOut className="h-4 w-4" /> Keluar Akun / Disconnect Perangkat
+                Ya, Keluar
               </Button>
             </div>
           </div>

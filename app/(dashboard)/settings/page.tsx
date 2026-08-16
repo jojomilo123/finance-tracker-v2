@@ -3,11 +3,13 @@
 import * as React from "react";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useTransactionStore } from "@/stores/use-transaction-store";
-import { Sliders, AlertTriangle, Save, RotateCcw, User } from "lucide-react";
+import { Sliders, AlertTriangle, Save, RotateCcw, User, LogOut } from "lucide-react";
+import { getSupabase } from "@/lib/supabase";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -18,6 +20,8 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = React.useState(settings.timezone);
   const [currency, setCurrency] = React.useState(settings.currency);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showResetConfirm, setShowResetConfirm] = React.useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
 
   // Sync from store when it changes
   React.useEffect(() => {
@@ -36,6 +40,7 @@ export default function SettingsPage() {
   };
 
   const handleResetAllData = () => {
+    setShowResetConfirm(false);
     resetStore();
     if (typeof window !== "undefined") {
       localStorage.removeItem("finance-tracker-tx-store");
@@ -43,6 +48,17 @@ export default function SettingsPage() {
     }
     toast({ title: "Data Direset Ke Kondisi Baru", description: "Semua data transaksi & saldo telah direset ke 0." });
     setTimeout(() => window.location.reload(), 1000);
+  };
+
+  const handleLogout = async () => {
+    setShowLogoutConfirm(false);
+    const client = getSupabase();
+    if (client) {
+      await client.auth.signOut();
+    }
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
   };
 
   const tabs = [
@@ -181,10 +197,20 @@ export default function SettingsPage() {
                     <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 space-y-3">
                       <h4 className="text-sm font-semibold text-red-400">Hapus Semua Data Keuangan</h4>
                       <p className="text-xs text-muted-foreground">
-                        Tindakan ini tidak dapat dibatalkan. Semua transaksi, anggaran, akun, target, dan langganan akan dihapus secara permanen dari localStorage browser Anda.
+                        Tindakan ini tidak dapat dibatalkan. Semua transaksi, anggaran, akun, target, dan langganan akan dihapus secara permanen.
                       </p>
-                      <Button variant="destructive" size="sm" onClick={handleResetAllData} className="gap-2">
+                      <Button variant="destructive" size="sm" onClick={() => setShowResetConfirm(true)} className="gap-2">
                         <RotateCcw className="h-4 w-4" /> Hapus Semua Data &amp; Reset
+                      </Button>
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-3">
+                      <h4 className="text-sm font-semibold text-amber-400">Keluar Akun / Disconnect Perangkat</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Putuskan sesi sinkronisasi perangkat ini. Data lokal Anda tetap tersimpan.
+                      </p>
+                      <Button variant="outline" size="sm" onClick={() => setShowLogoutConfirm(true)} className="gap-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10">
+                        <LogOut className="h-4 w-4" /> Keluar Akun
                       </Button>
                     </div>
                   </div>
@@ -194,6 +220,53 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      {/* Double Confirmation: Reset */}
+      <Dialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+        <DialogContent className="sm:max-w-sm bg-[#0D1420] text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-red-400">
+              <AlertTriangle className="h-5 w-5" /> Konfirmasi Hapus Data
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-[#AAB5C5]">
+              Apakah Anda <strong className="text-red-400">benar-benar yakin</strong> ingin menghapus seluruh data keuangan? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex items-center gap-3 pt-2">
+              <Button variant="outline" className="flex-1 rounded-xl border-white/10 text-white hover:bg-white/5" onClick={() => setShowResetConfirm(false)}>
+                Batal
+              </Button>
+              <Button variant="destructive" className="flex-1 rounded-xl bg-red-600 hover:bg-red-500" onClick={handleResetAllData}>
+                Ya, Hapus Semua
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Double Confirmation: Logout */}
+      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
+        <DialogContent className="sm:max-w-sm bg-[#0D1420] text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-amber-400">
+              <LogOut className="h-5 w-5" /> Konfirmasi Keluar
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-[#AAB5C5]">
+              Apakah Anda yakin ingin keluar? Sesi sinkronisasi perangkat ini akan terputus.
+            </p>
+            <div className="flex items-center gap-3 pt-2">
+              <Button variant="outline" className="flex-1 rounded-xl border-white/10 text-white hover:bg-white/5" onClick={() => setShowLogoutConfirm(false)}>
+                Batal
+              </Button>
+              <Button variant="destructive" className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500" onClick={handleLogout}>
+                Ya, Keluar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }
