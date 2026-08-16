@@ -109,6 +109,15 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 9. USER EDITOR LOCK TABLE (1 ACTIVE EDITOR LOCK PER USER)
+CREATE TABLE IF NOT EXISTS public.user_editor_lock (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    device_id TEXT NOT NULL,
+    device_name TEXT,
+    last_heartbeat TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- =========================================================================
 -- ENABLE ROW LEVEL SECURITY (RLS) ON ALL TABLES
 -- Ensures no public/unauthenticated access to financial data
@@ -122,6 +131,7 @@ ALTER TABLE public.user_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_liabilities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_editor_lock ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================================
 -- STRICT RLS POLICIES (AUTHENTICATED OWNER ONLY - IDEMPOTENT)
@@ -159,6 +169,10 @@ DROP POLICY IF EXISTS "Owner All Access - Settings" ON public.user_settings;
 CREATE POLICY "Owner All Access - Settings" ON public.user_settings
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Owner All Access - Editor Lock" ON public.user_editor_lock;
+CREATE POLICY "Owner All Access - Editor Lock" ON public.user_editor_lock
+    FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
 -- Enable Realtime publication for tables
 DO $$
 BEGIN
@@ -185,5 +199,8 @@ BEGIN
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_settings') THEN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.user_settings;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_editor_lock') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_editor_lock;
     END IF;
 END $$;

@@ -7,8 +7,13 @@ import { Lock, Sparkles, Database, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import { ModeSelector } from "@/components/mode/mode-selector";
+import { useTransactionStore } from "@/stores/use-transaction-store";
+
 export function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { appMode } = useTransactionStore();
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
+  const [userId, setUserId] = React.useState<string | null>(null);
   const [showConfigModal, setShowConfigModal] = React.useState(false);
 
   // Setup credentials state
@@ -39,26 +44,49 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     setShowConfigModal(false);
 
-    // Check active session
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      if (isMounted && isAuthenticated === null) {
+        setIsAuthenticated(false);
+      }
+    }, 1500);
+
     client.auth.getSession().then((res: { data: { session: any } }) => {
-      if (res.data.session) {
+      if (!isMounted) return;
+      clearTimeout(timer);
+      if (res.data?.session) {
         setIsAuthenticated(true);
-        initRealtimeSync();
+        setUserId(res.data.session.user.id);
+        initRealtimeSync().catch(() => {});
       } else {
         setIsAuthenticated(false);
+        setUserId(null);
+      }
+    }).catch(() => {
+      if (isMounted) {
+        clearTimeout(timer);
+        setIsAuthenticated(false);
+        setUserId(null);
       }
     });
 
     const { data: { subscription } } = client.auth.onAuthStateChange((_event: string, session: any) => {
+      if (!isMounted) return;
       if (session) {
         setIsAuthenticated(true);
-        initRealtimeSync();
+        setUserId(session.user.id);
+        initRealtimeSync().catch(() => {});
       } else {
         setIsAuthenticated(false);
+        setUserId(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSaveSetup = (e: React.FormEvent) => {
@@ -274,6 +302,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     );
+  }
+
+  if (appMode === "UNSELECTED" && userId) {
+    return <ModeSelector userId={userId} onModeSelected={() => {}} />;
   }
 
   return <>{children}</>;

@@ -11,33 +11,73 @@ import {
   SettingsRecord,
 } from "@/stores/use-transaction-store";
 
-let isSubscribed = false;
+import { getDeviceId, sendEditorHeartbeat } from "./editor-lock";
+
+let activeChannel: any = null;
+let heartbeatInterval: any = null;
+
+export function startHeartbeat(userId: string) {
+  if (heartbeatInterval) clearInterval(heartbeatInterval);
+  heartbeatInterval = setInterval(async () => {
+    const store = useTransactionStore.getState();
+    if (store.appMode === "EDITOR") {
+      await sendEditorHeartbeat(userId);
+    } else {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+  }, 10000);
+}
 
 export async function initRealtimeSync() {
   const client = getSupabase();
-  if (!isSupabaseConfigured() || !client || isSubscribed) return;
+  if (!isSupabaseConfigured() || !client) return;
 
   const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  isSubscribed = true;
+  startHeartbeat(session.user.id);
+
+  // Unsubscribe / remove existing realtime channel if already created to prevent "cannot add callbacks after subscribe()" error
+  if (activeChannel) {
+    try {
+      client.removeChannel(activeChannel);
+    } catch (e) {}
+    activeChannel = null;
+  }
+
+  try {
+    const existingChannels = client.getChannels();
+    for (const ch of existingChannels) {
+      if (ch.topic === "realtime:finance-tracker-realtime") {
+        client.removeChannel(ch);
+      }
+    }
+  } catch (e) {}
 
   // Listen to network status changes
   if (typeof window !== "undefined") {
+    window.removeEventListener("online", handleOnlineSync);
     window.addEventListener("online", handleOnlineSync);
   }
 
-  // Subscribe to Realtime DB events for this user
-  client
+  // Create new channel & add callbacks before calling subscribe()
+  activeChannel = client
     .channel("finance-tracker-realtime")
     .on("postgres_changes", { event: "*", schema: "public", table: "user_transactions" }, (payload: any) => {
       handleTransactionRealtime(payload);
     })
-    .on("postgres_changes", { event: "*", schema: "public", table: "user_accounts" }, () => pullRemoteAccounts())
+    .on("postgres_changes", { event: "*", schema: "public", table: "user_accounts" }, (payload: any) => {
+      handleAccountRealtime(payload);
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "user_editor_lock" }, (payload: any) => {
+      handleEditorLockRealtime(payload);
+    })
     .on("postgres_changes", { event: "*", schema: "public", table: "user_budgets" }, () => pullRemoteBudgets())
     .on("postgres_changes", { event: "*", schema: "public", table: "user_goals" }, () => pullRemoteGoals())
-    .on("postgres_changes", { event: "*", schema: "public", table: "user_settings" }, () => pullRemoteSettings())
-    .subscribe();
+    .on("postgres_changes", { event: "*", schema: "public", table: "user_settings" }, () => pullRemoteSettings());
+
+  activeChannel.subscribe();
 
   // Initial sync pull & seed
   await pullAllRemoteData();
@@ -46,6 +86,53 @@ export async function initRealtimeSync() {
 async function handleOnlineSync() {
   if (!isSupabaseConfigured()) return;
   await pullAllRemoteData();
+}
+
+function handleAccountRealtime(payload: any) {
+  if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+    const r = payload.new;
+    const updatedAcc: AccountRecord = {
+      id: r.id,
+      name: r.name,
+      type: r.type,
+      balance: Number(r.balance),
+      color: r.color,
+      icon: r.icon,
+    };
+    useTransactionStore.setState((state) => {
+      const exists = state.accounts.some((a) => a.id === updatedAcc.id);
+      const newAccounts = exists
+        ? state.accounts.map((a) => (a.id === updatedAcc.id ? updatedAcc : a))
+        : [...state.accounts, updatedAcc];
+      return { accounts: newAccounts };
+    });
+  } else if (payload.eventType === "DELETE") {
+    const deletedId = payload.old.id;
+    useTransactionStore.setState((state) => ({
+      accounts: state.accounts.filter((a) => a.id !== deletedId),
+    }));
+  }
+}
+
+function handleEditorLockRealtime(payload: any) {
+  const store = useTransactionStore.getState();
+  const newRow = payload.new;
+  if (!newRow) return;
+
+  const currentDeviceId = getDeviceId();
+  const lockInfo = {
+    userId: newRow.user_id,
+    deviceId: newRow.device_id,
+    deviceName: newRow.device_name || "Perangkat Lain",
+    lastHeartbeat: newRow.last_heartbeat,
+  };
+
+  store.setActiveEditorLock(lockInfo);
+
+  // If another device claimed Editor lock while this device was in Editor mode, convert this device to Viewer mode!
+  if (store.appMode === "EDITOR" && newRow.device_id !== currentDeviceId) {
+    store.setAppMode("VIEWER");
+  }
 }
 
 function handleTransactionRealtime(payload: any) {
@@ -68,6 +155,9 @@ function handleTransactionRealtime(payload: any) {
       transactions: state.transactions.map((t) => (t.id === updatedTx.id ? updatedTx : t)),
     }));
   }
+
+  // Re-fetch account balances to guarantee 100% realtime accuracy across devices
+  pullRemoteAccounts().catch(() => {});
 }
 
 export async function pushTransactionToRemote(tx: TransactionRecord) {
@@ -159,6 +249,15 @@ export async function pushAccountToRemote(acc: AccountRecord) {
     icon: acc.icon || null,
     updated_at: new Date().toISOString(),
   });
+}
+
+export async function deleteAccountFromRemote(id: string) {
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) return;
+
+  await client.from("user_accounts").delete().eq("id", id).eq("user_id", session.user.id);
 }
 
 export async function pushBudgetToRemote(b: BudgetRecord) {

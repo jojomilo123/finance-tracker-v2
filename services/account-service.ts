@@ -40,6 +40,36 @@ export async function createAccount(data: CreateAccountInput) {
   });
 }
 
+export async function updateAccount(data: {
+  id: string;
+  userId: string;
+  name?: string;
+  accountType?: AccountType;
+  currentBalance?: number;
+  color?: string;
+  icon?: string;
+  isDefault?: boolean;
+}) {
+  if (data.isDefault) {
+    await prisma.financialAccount.updateMany({
+      where: { userId: data.userId, isDefault: true },
+      data: { isDefault: false },
+    });
+  }
+
+  return await prisma.financialAccount.update({
+    where: { id: data.id, userId: data.userId },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.accountType !== undefined && { accountType: data.accountType }),
+      ...(data.currentBalance !== undefined && { currentBalance: data.currentBalance }),
+      ...(data.color !== undefined && { color: data.color }),
+      ...(data.icon !== undefined && { icon: data.icon }),
+      ...(data.isDefault !== undefined && { isDefault: data.isDefault }),
+    },
+  });
+}
+
 export async function deleteAccount(id: string, userId: string) {
   return await prisma.financialAccount.delete({
     where: { id, userId },

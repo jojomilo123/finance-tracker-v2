@@ -100,11 +100,11 @@ export function Sidebar() {
       {/* Desktop / iPad Sidebar (md+) */}
       <aside
         className={cn(
-          "hidden md:flex flex-shrink-0 flex-col bg-[#0D1420] border-r border-white/5 min-h-screen z-30 transition-[width] duration-300 ease-out",
+          "hidden md:flex flex-shrink-0 flex-col bg-[#0D1420] border-r border-white/10 min-h-screen h-full z-30 transition-[width] duration-300 ease-out",
           collapsed ? "w-[68px]" : "w-[220px]"
         )}
       >
-        <div className={cn("flex items-center px-4 py-5", collapsed ? "justify-center" : "justify-between")}>
+        <div className={cn("flex items-center px-4 h-16 border-b border-white/5 shrink-0", collapsed ? "justify-center" : "justify-between")}>
           <Link href="/dashboard" className="flex items-center space-x-2 group">
             <div className="p-2 rounded-xl bg-white text-[#080D16] shadow-md group-hover:scale-105 transition-transform duration-150">
               <Sparkles className="h-4 w-4 fill-current" />

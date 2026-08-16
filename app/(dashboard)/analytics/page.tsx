@@ -8,10 +8,19 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { LineChart as LineChartIcon, Store, CreditCard, Building2 } from "lucide-react";
 
 export default function AnalyticsPage() {
-  const { transactions } = useTransactionStore();
+  const { transactions, appMode } = useTransactionStore();
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   const merchantData = React.useMemo(() => {
     const map: Record<string, { amount: number; visits: number }> = {};

@@ -10,6 +10,7 @@ import { TransactionForm, TransactionFormValues, COMPREHENSIVE_CATEGORIES } from
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency, compressImage } from "@/lib/utils";
 import { useTransactionStore } from "@/stores/use-transaction-store";
+import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytics-dashboard";
 import { ArrowDownCircle, ArrowUpCircle, Wallet,
   FilePlus,
   BarChart2,
@@ -26,7 +27,7 @@ import { MiniTrend } from "@/components/charts/mini-trend";
 
 export default function DashboardPage() {
   const { toast } = useToast();
-  const { transactions, accounts, budgets, settings, updateSettings, addTransaction } = useTransactionStore();
+  const { transactions, accounts, budgets, settings, appMode, updateSettings, addTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [workspaceImage, setWorkspaceImage] = React.useState("/images/workspace-default.jpg");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -130,6 +131,14 @@ export default function DashboardPage() {
       description: `${values.title} (${formatCurrency(values.amount)}) berhasil dicatat.`,
     });
   };
+
+  if (appMode === "VIEWER") {
+    return (
+      <DashboardShell>
+        <ViewerAnalyticsDashboard />
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell onOpenQuickAdd={() => setIsModalOpen(true)}>

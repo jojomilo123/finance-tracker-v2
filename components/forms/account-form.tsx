@@ -23,6 +23,7 @@ export type AccountFormValues = z.infer<typeof accountSchema>;
 
 interface AccountFormProps {
   defaultValues?: Partial<AccountFormValues>;
+  submitLabel?: string;
   onSubmitSuccess: (values: AccountFormValues) => void;
   onCancel: () => void;
 }
@@ -41,6 +42,7 @@ const COLOR_OPTIONS = [
 
 export function AccountForm({
   defaultValues,
+  submitLabel = "Simpan Akun",
   onSubmitSuccess,
   onCancel,
 }: AccountFormProps) {
@@ -51,6 +53,7 @@ export function AccountForm({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
@@ -63,13 +66,25 @@ export function AccountForm({
     },
   });
 
+  React.useEffect(() => {
+    if (defaultValues) {
+      reset({
+        name: defaultValues.name || "",
+        accountType: defaultValues.accountType || AccountType.BANK,
+        currentBalance: defaultValues.currentBalance || 0,
+        color: defaultValues.color || "#3b82f6",
+        isDefault: defaultValues.isDefault || false,
+      });
+    }
+  }, [defaultValues, reset]);
+
   const selectedColor = watch("color");
   const selectedType = watch("accountType");
   const balanceVal = watch("currentBalance");
 
   const onSubmit = async (values: AccountFormValues) => {
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await new Promise((resolve) => setTimeout(resolve, 300));
     setIsLoading(false);
     onSubmitSuccess(values);
   };
@@ -119,7 +134,7 @@ export function AccountForm({
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs font-medium text-foreground">Saldo Awal</label>
+        <label className="text-xs font-medium text-foreground">Saldo Saat Ini / Saldo Awal</label>
         <CurrencyInput
           value={balanceVal}
           onChange={(val) => setValue("currentBalance", val)}
@@ -160,7 +175,7 @@ export function AccountForm({
           Batal
         </Button>
         <Button type="submit" isLoading={isLoading}>
-          Simpan Akun
+          {submitLabel}
         </Button>
       </div>
     </form>

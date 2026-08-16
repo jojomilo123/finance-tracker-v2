@@ -5,6 +5,7 @@ import {
   deleteTransactionFromRemote,
   pushSettingsToRemote,
   pushAccountToRemote,
+  deleteAccountFromRemote,
   pushBudgetToRemote,
   pushGoalToRemote,
   clearRemoteData,
@@ -95,13 +96,18 @@ interface TransactionState {
   subscriptions: SubscriptionRecord[];
   settings: SettingsRecord;
   sidebarCollapsed: boolean;
+  appMode: "UNSELECTED" | "EDITOR" | "VIEWER";
+  activeEditorLock: { userId: string; deviceId: string; deviceName: string; lastHeartbeat: string } | null;
 
+  setAppMode: (mode: "UNSELECTED" | "EDITOR" | "VIEWER") => void;
+  setActiveEditorLock: (lock: { userId: string; deviceId: string; deviceName: string; lastHeartbeat: string } | null) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   addTransaction: (tx: Omit<TransactionRecord, "id">) => void;
   deleteTransaction: (id: string) => TransactionRecord | undefined;
   restoreTransaction: (tx: TransactionRecord) => void;
 
   addAccount: (acc: Omit<AccountRecord, "id">) => void;
+  updateAccount: (id: string, accData: Partial<AccountRecord>) => void;
   deleteAccount: (id: string) => void;
 
   updateBudget: (id: string, budgetAmount: number) => void;
@@ -126,10 +132,6 @@ interface TransactionState {
 
 const INITIAL_ACCOUNTS: AccountRecord[] = [
   { id: "acc-1", name: "BCA Utama", type: "BANK", balance: 0, color: "#0056a4" },
-  { id: "acc-2", name: "Mandiri Tabungan", type: "BANK", balance: 0, color: "#003d79" },
-  { id: "acc-3", name: "Dompet Tunai", type: "CASH", balance: 0, color: "#10b981" },
-  { id: "acc-4", name: "GoPay", type: "E_WALLET", balance: 0, color: "#06b6d4" },
-  { id: "acc-5", name: "OVO", type: "E_WALLET", balance: 0, color: "#8b5cf6" },
 ];
 
 const INITIAL_TRANSACTIONS: TransactionRecord[] = [];
@@ -150,10 +152,6 @@ const INITIAL_GOALS: GoalRecord[] = [
 
 const INITIAL_ASSETS: NetWorthAsset[] = [
   { id: "a-1", name: "BCA Utama", type: "Bank", amount: 0, color: "#0056a4" },
-  { id: "a-2", name: "Mandiri Tabungan", type: "Bank", amount: 0, color: "#003d79" },
-  { id: "a-3", name: "Dompet Tunai", type: "Tunai", amount: 0, color: "#10b981" },
-  { id: "a-4", name: "E-Wallet", type: "E-Wallet", amount: 0, color: "#06b6d4" },
-  { id: "a-5", name: "Investasi", type: "Investasi", amount: 0, color: "#8b5cf6" },
 ];
 
 const INITIAL_LIABILITIES: NetWorthLiability[] = [];
@@ -172,10 +170,18 @@ export const useTransactionStore = create<TransactionState>()(
       subscriptions: INITIAL_SUBSCRIPTIONS,
       settings: { name: "Pengguna Lokal", email: "user@local.app", timezone: "Asia/Jakarta", currency: "IDR" },
       sidebarCollapsed: false,
+      appMode: "UNSELECTED",
+      activeEditorLock: null,
 
+      setAppMode: (mode) => set({ appMode: mode }),
+      setActiveEditorLock: (lock) => set({ activeEditorLock: lock }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
       addTransaction: (txData) => {
+        if (get().appMode === "VIEWER") {
+          console.warn("Write blocked: Mode Viewer (Read-Only)");
+          return;
+        }
         const newTx: TransactionRecord = { ...txData, id: `tx-${Date.now()}` };
         set((state) => {
           const updatedAccounts = state.accounts.map((acc) => {
@@ -199,6 +205,10 @@ export const useTransactionStore = create<TransactionState>()(
       },
 
       deleteTransaction: (id) => {
+        if (get().appMode === "VIEWER") {
+          console.warn("Write blocked: Mode Viewer (Read-Only)");
+          return undefined;
+        }
         const state = get();
         const deleted = state.transactions.find((t) => t.id === id);
         if (!deleted) return undefined;
@@ -247,14 +257,41 @@ export const useTransactionStore = create<TransactionState>()(
       },
 
       addAccount: (accData) => {
+        if (get().appMode === "VIEWER") return;
         const newAcc: AccountRecord = { ...accData, id: `acc-${Date.now()}` };
         set((state) => ({ accounts: [...state.accounts, newAcc] }));
         pushAccountToRemote(newAcc).catch(() => {});
       },
 
-      deleteAccount: (id) => set((state) => ({ accounts: state.accounts.filter((a) => a.id !== id) })),
+      updateAccount: (id, accData) => {
+        if (get().appMode === "VIEWER") return;
+        set((state) => {
+          const updatedAccounts = state.accounts.map((acc) =>
+            acc.id === id ? { ...acc, ...accData } : acc
+          );
+          const target = updatedAccounts.find((acc) => acc.id === id);
+          if (target) {
+            pushAccountToRemote(target).catch(() => {});
+          }
+          const updatedTransactions = accData.name
+            ? state.transactions.map((tx) => ({
+                ...tx,
+                accountName: tx.accountId === id ? accData.name! : tx.accountName,
+                toAccountName: tx.toAccountId === id ? accData.name! : tx.toAccountName,
+              }))
+            : state.transactions;
+          return { accounts: updatedAccounts, transactions: updatedTransactions };
+        });
+      },
+
+      deleteAccount: (id) => {
+        if (get().appMode === "VIEWER") return;
+        set((state) => ({ accounts: state.accounts.filter((a) => a.id !== id) }));
+        deleteAccountFromRemote(id).catch(() => {});
+      },
 
       updateBudget: (id, budgetAmount) => {
+        if (get().appMode === "VIEWER") return;
         set((state) => {
           const updated = state.budgets.map((b) => b.id === id ? { ...b, budgetAmount } : b);
           const target = updated.find((b) => b.id === id);
@@ -321,9 +358,12 @@ export const useTransactionStore = create<TransactionState>()(
       },
       resetStore: () => {
         clearRemoteData().catch(() => {});
+        const defaultAccounts: AccountRecord[] = [
+          { id: "acc-1", name: "BCA Utama", type: "BANK", balance: 0, color: "#0056a4" },
+        ];
         set({
           transactions: [],
-          accounts: INITIAL_ACCOUNTS.map((a) => ({ ...a, balance: 0 })),
+          accounts: defaultAccounts,
           budgets: INITIAL_BUDGETS.map((b) => ({ ...b, spentAmount: 0 })),
           goals: [],
           assets: [],
@@ -333,6 +373,12 @@ export const useTransactionStore = create<TransactionState>()(
         });
       },
     }),
-    { name: "finance-tracker-tx-store" }
+    {
+      name: "finance-tracker-tx-store",
+      partialize: (state) => {
+        const { appMode, activeEditorLock, ...rest } = state;
+        return rest;
+      },
+    }
   )
 );

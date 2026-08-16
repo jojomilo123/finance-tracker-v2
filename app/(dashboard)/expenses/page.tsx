@@ -14,8 +14,9 @@ import { TrendingDown, Plus, RotateCcw } from "lucide-react";
 
 export default function ExpensesPage() {
   const { toast } = useToast();
-  const { transactions, accounts, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
+  const { transactions, accounts, appMode, addTransaction, deleteTransaction, restoreTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const isViewer = appMode === "VIEWER";
 
   const expenseItems = React.useMemo(() => transactions.filter((t) => t.transactionType === "EXPENSE"), [transactions]);
 
@@ -87,18 +88,22 @@ export default function ExpensesPage() {
   };
 
   return (
-    <DashboardShell onOpenQuickAdd={() => setIsModalOpen(true)}>
+    <DashboardShell onOpenQuickAdd={isViewer ? undefined : () => setIsModalOpen(true)}>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 rounded-2xl bg-card border border-border shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 rounded-2xl bg-[#0D1420] border border-white/10 shadow-sm">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Pengeluaran (Expenses)</h1>
             <p className="text-sm text-muted-foreground">
-              Analisis detail pengeluaran bulanan Anda menurut merchant dan pos kategori.
+              {isViewer
+                ? "Mode Viewer (Read-Only): Riwayat & analisis pengeluaran bulanan Anda."
+                : "Analisis detail pengeluaran bulanan Anda menurut merchant dan pos kategori."}
             </p>
           </div>
-          <Button onClick={() => setIsModalOpen(true)} className="rounded-xl gap-2">
-            <Plus className="h-4 w-4" /> Catat Pengeluaran
-          </Button>
+          {!isViewer && (
+            <Button onClick={() => setIsModalOpen(true)} className="rounded-xl gap-2">
+              <Plus className="h-4 w-4" /> Catat Pengeluaran
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -126,7 +131,7 @@ export default function ExpensesPage() {
 
         <TransactionTimeline
           items={expenseItems}
-          onDelete={handleDelete}
+          onDelete={isViewer ? undefined : handleDelete}
           onSelect={(item) =>
             toast({
               title: item.title,

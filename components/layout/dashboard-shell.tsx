@@ -56,24 +56,22 @@ export function DashboardShell({ children, onOpenQuickAdd }: DashboardShellProps
   };
 
   return (
-    <div className="min-h-screen bg-[#080D16] text-[#F5F7FA] flex flex-col md:flex-row overflow-x-hidden">
+    <div className="min-h-screen bg-[#080D16] text-[#F5F7FA] flex flex-col md:flex-row overflow-x-hidden items-stretch">
       {/* Sidebar Navigation */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-8">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen pb-20 md:pb-8">
         {/* Navbar with proper spacing from sidebar */}
-        <div className="sticky top-0 z-30 px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+        <div className="sticky top-0 z-30 px-4 sm:px-6 lg:px-8 pt-3.5 pb-2.5">
           <Navbar onOpenQuickAdd={handleOpenQuickAdd} />
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-2 w-full">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-3 w-full">
           {children}
         </main>
       </div>
-
-      {/* Floating AI Coach removed */}
 
       {/* Universal Quick Add */}
       <Dialog open={isUniversalModalOpen} onOpenChange={setIsUniversalModalOpen}>

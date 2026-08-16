@@ -7,9 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { useTransactionStore } from "@/stores/use-transaction-store";
+import { useTransactionStore, AccountRecord } from "@/stores/use-transaction-store";
 import { Sliders, AlertTriangle, Save, RotateCcw, User, LogOut } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { clearRemoteData, pushAccountToRemote } from "@/lib/sync-engine";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -39,15 +40,20 @@ export default function SettingsPage() {
     toast({ variant: "success", title: "Pengaturan Disimpan", description: "Nama dan preferensi berhasil diperbarui." });
   };
 
-  const handleResetAllData = () => {
+  const handleResetAllData = async () => {
     setShowResetConfirm(false);
+    setIsLoading(true);
+    await clearRemoteData();
     resetStore();
     if (typeof window !== "undefined") {
       localStorage.removeItem("finance-tracker-tx-store");
       localStorage.removeItem("finance-tracker-workspace-img");
     }
-    toast({ title: "Data Direset Ke Kondisi Baru", description: "Semua data transaksi & saldo telah direset ke 0." });
-    setTimeout(() => window.location.reload(), 1000);
+    const defaultBca: AccountRecord = { id: "acc-1", name: "BCA Utama", type: "BANK", balance: 0, color: "#0056a4" };
+    await pushAccountToRemote(defaultBca);
+    setIsLoading(false);
+    toast({ title: "Data Direset Ke Kondisi Baru", description: "Semua data telah direset. Hanya akun BCA Utama yang tersisa." });
+    setTimeout(() => window.location.reload(), 400);
   };
 
   const handleLogout = async () => {
@@ -165,8 +171,7 @@ export default function SettingsPage() {
                     <div className="p-4 rounded-xl bg-[#172131] border border-white/5 space-y-3">
                       <p className="text-xs font-semibold text-foreground">Penyimpanan Data</p>
                       <p className="text-xs text-muted-foreground">
-                        Semua data transaksi, akun, anggaran, target, dan pengaturan disimpan di localStorage browser Anda.
-                        Data tetap tersimpan meskipun browser ditutup.
+                        Semua data transaksi, akun, anggaran, target, dan pengaturan disimpan secara otomatis di localStorage browser Anda dan disinkronkan ke Supabase Cloud.
                       </p>
                     </div>
                     <div className="p-4 rounded-xl bg-[#172131] border border-white/5 space-y-3">
