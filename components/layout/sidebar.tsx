@@ -23,9 +23,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu as MenuIcon,
-  X,
+  LogOut,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { getSupabase } from "@/lib/supabase";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -71,10 +73,20 @@ export function Sidebar() {
 
   const mobileBottomItems = [
     { title: "Home", href: "/dashboard", icon: Home },
-    { title: "Transaksi", href: "/transactions", icon: ArrowLeftRight },
+    { title: "Laporan", href: "/reports", icon: BarChart3 },
     { title: "Analisis", href: "/analytics", icon: PieChart },
-    { title: "Anggaran", href: "/budgets", icon: PiggyBank },
+    { title: "Kalender", href: "/calendar", icon: Calendar },
   ];
+
+  const handleLogout = async () => {
+    const client = getSupabase();
+    if (client) {
+      await client.auth.signOut();
+    }
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
+  };
 
   return (
     <>
@@ -231,6 +243,20 @@ export function Sidebar() {
                 </div>
               </div>
             ))}
+
+            {/* Logout / Disconnect Button inside Mobile Drawer */}
+            <div className="pt-3 border-t border-white/10">
+              <Button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                variant="destructive"
+                className="w-full rounded-xl gap-2 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white"
+              >
+                <LogOut className="h-4 w-4" /> Keluar Akun / Disconnect Perangkat
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
