@@ -12,15 +12,7 @@ import { ViewerAnalyticsDashboard } from "@/components/analytics/viewer-analytic
 import { LineChart as LineChartIcon, Store, CreditCard, Building2 } from "lucide-react";
 
 export default function AnalyticsPage() {
-  const { transactions, appMode } = useTransactionStore();
-
-  if (appMode === "VIEWER") {
-    return (
-      <DashboardShell>
-        <ViewerAnalyticsDashboard />
-      </DashboardShell>
-    );
-  }
+  const { transactions } = useTransactionStore();
 
   const merchantData = React.useMemo(() => {
     const map: Record<string, { amount: number; visits: number }> = {};
@@ -64,6 +56,10 @@ export default function AnalyticsPage() {
   return (
     <DashboardShell>
       <div className="space-y-6">
+        {/* Unified Budget & Financial Analysis Section */}
+        <ViewerAnalyticsDashboard />
+
+        {/* Merchant & Payment Analytics Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 rounded-2xl bg-card border border-border shadow-sm">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Analisis &amp; Intelijen Merchant</h1>

@@ -24,7 +24,6 @@ import {
   ChevronRight,
   LayoutGrid,
   LogOut,
-  ShieldCheck,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -53,7 +52,6 @@ export function Sidebar() {
             { title: "Dashboard Overview", href: "/dashboard", icon: Home },
             { title: "Laporan", href: "/reports", icon: BarChart3 },
             { title: "Analytics", href: "/analytics", icon: PieChart },
-            { title: "Analisa Anggaran", href: "/budget-analysis", icon: ShieldCheck },
             { title: "Kalender Aktivitas", href: "/calendar", icon: Calendar },
           ],
         },
@@ -89,7 +87,6 @@ export function Sidebar() {
           items: [
             { title: "Reports", href: "/reports", icon: BarChart3 },
             { title: "Analytics", href: "/analytics", icon: PieChart },
-            { title: "Analisa Anggaran", href: "/budget-analysis", icon: ShieldCheck },
             { title: "Calendar", href: "/calendar", icon: Calendar },
           ],
         },
