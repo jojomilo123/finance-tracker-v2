@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS public.user_transactions (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure id column is TEXT type
+ALTER TABLE public.user_transactions ALTER COLUMN id TYPE TEXT;
+
 -- 2. USER ACCOUNTS TABLE
 CREATE TABLE IF NOT EXISTS public.user_accounts (
     id TEXT PRIMARY KEY,
@@ -50,9 +53,9 @@ CREATE TABLE IF NOT EXISTS public.user_goals (
     id TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    target_amount NUMERIC NOT NULL,
+    target_amount NUMERIC NOT NULL DEFAULT 0,
     current_saved NUMERIC NOT NULL DEFAULT 0,
-    target_date TEXT NOT NULL,
+    target_date TEXT,
     color TEXT,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -62,9 +65,10 @@ CREATE TABLE IF NOT EXISTS public.user_assets (
     id TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    type TEXT NOT NULL,
-    amount NUMERIC NOT NULL DEFAULT 0,
-    color TEXT,
+    category TEXT NOT NULL,
+    value NUMERIC NOT NULL DEFAULT 0,
+    growth_rate NUMERIC DEFAULT 0,
+    notes TEXT,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -73,8 +77,11 @@ CREATE TABLE IF NOT EXISTS public.user_liabilities (
     id TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    category TEXT NOT NULL,
     amount NUMERIC NOT NULL DEFAULT 0,
-    due_date TEXT NOT NULL,
+    interest_rate NUMERIC DEFAULT 0,
+    monthly_payment NUMERIC DEFAULT 0,
+    due_date TEXT,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -83,10 +90,10 @@ CREATE TABLE IF NOT EXISTS public.user_subscriptions (
     id TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    amount NUMERIC NOT NULL,
-    cycle TEXT NOT NULL,
-    next_date TEXT NOT NULL,
+    cost NUMERIC NOT NULL DEFAULT 0,
+    billing_cycle TEXT NOT NULL DEFAULT 'MONTHLY',
     category TEXT NOT NULL,
+    next_billing_date TEXT,
     is_paused BOOLEAN NOT NULL DEFAULT false,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -116,39 +123,66 @@ ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================================
--- STRICT RLS POLICIES (AUTHENTICATED OWNER ONLY)
+-- STRICT RLS POLICIES (AUTHENTICATED OWNER ONLY - IDEMPOTENT)
 -- =========================================================================
 
+DROP POLICY IF EXISTS "Owner All Access - Transactions" ON public.user_transactions;
 CREATE POLICY "Owner All Access - Transactions" ON public.user_transactions
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Owner All Access - Accounts" ON public.user_accounts;
 CREATE POLICY "Owner All Access - Accounts" ON public.user_accounts
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Owner All Access - Budgets" ON public.user_budgets;
 CREATE POLICY "Owner All Access - Budgets" ON public.user_budgets
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Owner All Access - Goals" ON public.user_goals;
 CREATE POLICY "Owner All Access - Goals" ON public.user_goals
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Owner All Access - Assets" ON public.user_assets;
 CREATE POLICY "Owner All Access - Assets" ON public.user_assets
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Owner All Access - Liabilities" ON public.user_liabilities;
 CREATE POLICY "Owner All Access - Liabilities" ON public.user_liabilities
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Owner All Access - Subscriptions" ON public.user_subscriptions;
 CREATE POLICY "Owner All Access - Subscriptions" ON public.user_subscriptions
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Owner All Access - Settings" ON public.user_settings;
 CREATE POLICY "Owner All Access - Settings" ON public.user_settings
     FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- Enable Realtime publication for tables
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_transactions;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_accounts;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_budgets;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_goals;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_assets;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_liabilities;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_subscriptions;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_settings;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_transactions') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_transactions;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_accounts') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_accounts;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_budgets') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_budgets;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_goals') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_goals;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_assets') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_assets;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_liabilities') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_liabilities;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_subscriptions') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_subscriptions;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_settings') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_settings;
+    END IF;
+END $$;
