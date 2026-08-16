@@ -94,7 +94,7 @@ export default function ReportsPage() {
   const avgDaily = totalExpense / (period === "DAILY" ? 1 : period === "WEEKLY" ? 7 : period === "MONTHLY" ? 30 : 365);
   const topCategory = categoryBarData[0];
 
-  const sampleHeatmapData = React.useMemo(() => generateHeatmapData(45), []);
+  const sampleHeatmapData = React.useMemo(() => generateHeatmapData(transactions, 45), [transactions]);
 
   const cashFlowData = React.useMemo(() => {
     if (period === "DAILY") return [{ period: "Hari Ini", income: totalIncome, expense: totalExpense, savings: totalIncome - totalExpense }];

@@ -8,7 +8,7 @@ import { SummaryCard } from "@/components/cards/summary-card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, calculateMonthOverMonthChange } from "@/lib/utils";
 import { useTransactionStore } from "@/stores/use-transaction-store";
 import { TrendingDown, Plus, RotateCcw } from "lucide-react";
 
@@ -18,6 +18,11 @@ export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   const expenseItems = React.useMemo(() => transactions.filter((t) => t.transactionType === "EXPENSE"), [transactions]);
+
+  const expenseChangePercentage = React.useMemo(
+    () => calculateMonthOverMonthChange(transactions, "EXPENSE"),
+    [transactions]
+  );
   const totalExpense = React.useMemo(() => expenseItems.reduce((acc, curr) => acc + curr.amount, 0), [expenseItems]);
 
   const topCategoryItem = React.useMemo(() => {
@@ -100,7 +105,7 @@ export default function ExpensesPage() {
           <SummaryCard
             title="Total Pengeluaran"
             amount={totalExpense}
-            changePercentage={-5.4}
+            changePercentage={expenseChangePercentage}
             icon={TrendingDown}
             iconColor="text-rose-500"
           />

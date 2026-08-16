@@ -8,7 +8,7 @@ import { SummaryCard } from "@/components/cards/summary-card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, calculateMonthOverMonthChange } from "@/lib/utils";
 import { useTransactionStore } from "@/stores/use-transaction-store";
 import { TrendingUp, Plus, RotateCcw } from "lucide-react";
 
@@ -18,6 +18,11 @@ export default function IncomePage() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   const incomeItems = React.useMemo(() => transactions.filter((t) => t.transactionType === "INCOME"), [transactions]);
+
+  const incomeChangePercentage = React.useMemo(
+    () => calculateMonthOverMonthChange(transactions, "INCOME"),
+    [transactions]
+  );
   const totalIncome = React.useMemo(() => incomeItems.reduce((acc, curr) => acc + curr.amount, 0), [incomeItems]);
 
   const topIncomeItem = React.useMemo(() => {
@@ -99,7 +104,7 @@ export default function IncomePage() {
           <SummaryCard
             title="Total Pemasukan"
             amount={totalIncome}
-            changePercentage={14.2}
+            changePercentage={incomeChangePercentage}
             icon={TrendingUp}
             iconColor="text-emerald-500"
           />

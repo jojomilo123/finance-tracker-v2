@@ -7,6 +7,7 @@ import {
   pushAccountToRemote,
   pushBudgetToRemote,
   pushGoalToRemote,
+  clearRemoteData,
 } from "@/lib/sync-engine";
 
 export interface TransactionRecord {
@@ -81,6 +82,7 @@ export interface SettingsRecord {
   email: string;
   timezone: string;
   currency: string;
+  avatarUrl?: string;
 }
 
 interface TransactionState {
@@ -312,17 +314,19 @@ export const useTransactionStore = create<TransactionState>()(
           return { settings: updated };
         });
       },
-      resetStore: () =>
+      resetStore: () => {
+        clearRemoteData().catch(() => {});
         set({
           transactions: [],
-          accounts: INITIAL_ACCOUNTS,
-          budgets: INITIAL_BUDGETS,
-          goals: INITIAL_GOALS,
-          assets: INITIAL_ASSETS,
+          accounts: [],
+          budgets: [],
+          goals: [],
+          assets: [],
           liabilities: [],
           subscriptions: [],
           settings: { name: "Pengguna Lokal", email: "user@local.app", timezone: "Asia/Jakarta", currency: "IDR" },
-        }),
+        });
+      },
     }),
     { name: "finance-tracker-tx-store" }
   )

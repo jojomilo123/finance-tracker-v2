@@ -55,3 +55,36 @@ export function formatCurrency(
   }).format(amount);
 }
 
+export function calculateMonthOverMonthChange(
+  transactions: Array<{ date: string; amount: number; transactionType: string }>,
+  type: "INCOME" | "EXPENSE"
+): number {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+  const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+
+  let currentSum = 0;
+  let prevSum = 0;
+
+  transactions.forEach((t) => {
+    if (t.transactionType !== type) return;
+    const txDate = new Date(t.date);
+    if (isNaN(txDate.getTime())) return;
+
+    if (txDate.getFullYear() === currentYear && txDate.getMonth() === currentMonth) {
+      currentSum += t.amount;
+    } else if (txDate.getFullYear() === prevYear && txDate.getMonth() === prevMonth) {
+      prevSum += t.amount;
+    }
+  });
+
+  if (prevSum === 0) {
+    return currentSum > 0 ? 100 : 0;
+  }
+
+  const change = ((currentSum - prevSum) / prevSum) * 100;
+  return Number(change.toFixed(1));
+}

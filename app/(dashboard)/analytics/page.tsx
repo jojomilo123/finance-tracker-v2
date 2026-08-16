@@ -28,12 +28,29 @@ export default function AnalyticsPage() {
       .sort((a, b) => b.amount - a.amount);
   }, [transactions]);
 
-  const paymentMethodUsage = [
-    { name: "QRIS", percentage: 42, color: "#ef4444" },
-    { name: "Bank Transfer", percentage: 35, color: "#3b82f6" },
-    { name: "GoPay", percentage: 15, color: "#06b6d4" },
-    { name: "Cash", percentage: 8, color: "#10b981" },
-  ];
+  const paymentMethodUsage = React.useMemo(() => {
+    if (transactions.length === 0) {
+      return [
+        { name: "Belum Ada Data", percentage: 0, color: "#6b7280" },
+      ];
+    }
+    const map: Record<string, number> = {};
+    let total = 0;
+    transactions.forEach((t) => {
+      const name = t.accountName || "Umum";
+      map[name] = (map[name] || 0) + t.amount;
+      total += t.amount;
+    });
+
+    const colors = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ec4899", "#06b6d4"];
+    return Object.entries(map)
+      .map(([name, amount], idx) => ({
+        name,
+        percentage: total > 0 ? Math.round((amount / total) * 100) : 0,
+        color: colors[idx % colors.length],
+      }))
+      .sort((a, b) => b.percentage - a.percentage);
+  }, [transactions]);
 
   return (
     <DashboardShell>

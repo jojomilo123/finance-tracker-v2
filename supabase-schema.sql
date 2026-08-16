@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     email TEXT NOT NULL,
     timezone TEXT NOT NULL DEFAULT 'Asia/Jakarta',
     currency TEXT NOT NULL DEFAULT 'IDR',
+    avatar_url TEXT,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 

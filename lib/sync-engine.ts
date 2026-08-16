@@ -138,6 +138,7 @@ export async function pushSettingsToRemote(settings: SettingsRecord) {
     email: settings.email,
     timezone: settings.timezone,
     currency: settings.currency,
+    avatar_url: settings.avatarUrl || null,
     updated_at: new Date().toISOString(),
   });
 }
@@ -193,6 +194,25 @@ export async function pushGoalToRemote(g: GoalRecord) {
     color: g.color || null,
     updated_at: new Date().toISOString(),
   });
+}
+
+export async function clearRemoteData() {
+  const client = getSupabase();
+  if (!isSupabaseConfigured() || !client) return;
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) return;
+
+  const uid = session.user.id;
+  await Promise.all([
+    client.from("user_transactions").delete().eq("user_id", uid),
+    client.from("user_accounts").delete().eq("user_id", uid),
+    client.from("user_budgets").delete().eq("user_id", uid),
+    client.from("user_goals").delete().eq("user_id", uid),
+    client.from("user_assets").delete().eq("user_id", uid),
+    client.from("user_liabilities").delete().eq("user_id", uid),
+    client.from("user_subscriptions").delete().eq("user_id", uid),
+    client.from("user_settings").delete().eq("user_id", uid),
+  ]);
 }
 
 export async function pullAllRemoteData() {
@@ -319,6 +339,7 @@ async function pullRemoteSettings() {
       email: data.email,
       timezone: data.timezone,
       currency: data.currency,
+      avatarUrl: data.avatar_url || undefined,
     };
     useTransactionStore.setState({ settings });
   } else {

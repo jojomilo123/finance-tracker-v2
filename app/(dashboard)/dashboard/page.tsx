@@ -26,17 +26,19 @@ import { MiniTrend } from "@/components/charts/mini-trend";
 
 export default function DashboardPage() {
   const { toast } = useToast();
-  const { transactions, accounts, budgets, addTransaction } = useTransactionStore();
+  const { transactions, accounts, budgets, settings, updateSettings, addTransaction } = useTransactionStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [workspaceImage, setWorkspaceImage] = React.useState("/images/cozy-desk.png");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (settings.avatarUrl) {
+      setWorkspaceImage(settings.avatarUrl);
+    } else if (typeof window !== "undefined") {
       const savedImg = localStorage.getItem("finance-tracker-workspace-img");
       if (savedImg) setWorkspaceImage(savedImg);
     }
-  }, []);
+  }, [settings.avatarUrl]);
 
   const handleChangePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,7 +48,10 @@ export default function DashboardPage() {
         const result = event.target?.result as string;
         if (result) {
           setWorkspaceImage(result);
-          localStorage.setItem("finance-tracker-workspace-img", result);
+          updateSettings({ avatarUrl: result });
+          if (typeof window !== "undefined") {
+            localStorage.setItem("finance-tracker-workspace-img", result);
+          }
           toast({ variant: "success", title: "Foto Diubah", description: "Foto workspace berhasil diperbarui dan tersimpan." });
         }
       };

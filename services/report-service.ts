@@ -75,7 +75,17 @@ export function calculateReportMetrics(
   };
 }
 
-export function generateHeatmapData(days: number = 60) {
+export function generateHeatmapData(
+  transactions: Array<{ date: string; amount: number; transactionType: string }> = [],
+  days: number = 45
+) {
+  const map: Record<string, number> = {};
+  transactions
+    .filter((t) => t.transactionType === "EXPENSE")
+    .forEach((t) => {
+      map[t.date] = (map[t.date] || 0) + t.amount;
+    });
+
   const result = [];
   const today = new Date();
 
@@ -83,8 +93,7 @@ export function generateHeatmapData(days: number = 60) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split("T")[0];
-    // Random sample spending value between 0 and 500,000 IDR
-    const count = Math.random() > 0.4 ? Math.floor(Math.random() * 450000) : 0;
+    const count = map[dateStr] || 0;
     result.push({ date: dateStr, count });
   }
 
