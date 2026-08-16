@@ -318,8 +318,8 @@ export const useTransactionStore = create<TransactionState>()(
         clearRemoteData().catch(() => {});
         set({
           transactions: [],
-          accounts: [],
-          budgets: [],
+          accounts: INITIAL_ACCOUNTS.map((a) => ({ ...a, balance: 0 })),
+          budgets: INITIAL_BUDGETS.map((b) => ({ ...b, spentAmount: 0 })),
           goals: [],
           assets: [],
           liabilities: [],

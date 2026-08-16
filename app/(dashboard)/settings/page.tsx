@@ -36,16 +36,13 @@ export default function SettingsPage() {
   };
 
   const handleResetAllData = () => {
+    resetStore();
     if (typeof window !== "undefined") {
-      const savedImg = localStorage.getItem("finance-tracker-workspace-img");
-      resetStore();
       localStorage.removeItem("finance-tracker-tx-store");
-      if (savedImg) {
-        localStorage.setItem("finance-tracker-workspace-img", savedImg);
-      }
-      toast({ title: "Data Direset Ke Kondisi Baru", description: "Semua data transaksi & saldo telah direset ke 0. Foto workspace Anda tetap tersimpan." });
-      setTimeout(() => window.location.reload(), 1000);
+      localStorage.removeItem("finance-tracker-workspace-img");
     }
+    toast({ title: "Data Direset Ke Kondisi Baru", description: "Semua data transaksi & saldo telah direset ke 0." });
+    setTimeout(() => window.location.reload(), 1000);
   };
 
   const tabs = [

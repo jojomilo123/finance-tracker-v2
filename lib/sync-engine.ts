@@ -332,7 +332,7 @@ async function pullRemoteSettings() {
   const { data: { session } } = await client.auth.getSession();
   if (!session) return;
 
-  const { data } = await client.from("user_settings").select("*").eq("user_id", session.user.id).single();
+  const { data } = await client.from("user_settings").select("*").eq("user_id", session.user.id).maybeSingle();
   if (data) {
     const settings: SettingsRecord = {
       name: data.name,

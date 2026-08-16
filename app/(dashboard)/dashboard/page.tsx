@@ -8,7 +8,7 @@ import { ExpensePieChart } from "@/components/charts/expense-pie-chart";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TransactionForm, TransactionFormValues, COMPREHENSIVE_CATEGORIES } from "@/components/forms/transaction-form";
 import { useToast } from "@/components/ui/use-toast";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, compressImage } from "@/lib/utils";
 import { useTransactionStore } from "@/stores/use-transaction-store";
 import { ArrowDownCircle, ArrowUpCircle, Wallet,
   FilePlus,
@@ -40,22 +40,16 @@ export default function DashboardPage() {
     }
   }, [settings.avatarUrl]);
 
-  const handleChangePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        if (result) {
-          setWorkspaceImage(result);
-          updateSettings({ avatarUrl: result });
-          if (typeof window !== "undefined") {
-            localStorage.setItem("finance-tracker-workspace-img", result);
-          }
-          toast({ variant: "success", title: "Foto Diubah", description: "Foto workspace berhasil diperbarui dan tersimpan." });
-        }
-      };
-      reader.readAsDataURL(file);
+      const compressed = await compressImage(file, 300, 0.7);
+      setWorkspaceImage(compressed);
+      updateSettings({ avatarUrl: compressed });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("finance-tracker-workspace-img", compressed);
+      }
+      toast({ variant: "success", title: "Foto Diubah", description: "Foto workspace berhasil diperbarui dan tersimpan." });
     }
   };
 
