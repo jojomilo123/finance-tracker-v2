@@ -1,0 +1,16 @@
+node_modules/
+.next/
+/.vercel/
+.env.local
+.env.*
+.DS_Store
+dist/
+coverage/
+.vscode/
+pnpm-lock.yaml
+npm-debug.log
+yarn-error.log
+logs/
+*.log
+.idea/
+*.sqlite
