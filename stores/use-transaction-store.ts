@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { pushTransactionToRemote, deleteTransactionFromRemote } from "@/lib/sync-engine";
+import { pushTransactionToRemote, deleteTransactionFromRemote, pushSettingsToRemote } from "@/lib/sync-engine";
 
 export interface TransactionRecord {
   id: string;
@@ -281,7 +281,13 @@ export const useTransactionStore = create<TransactionState>()(
         subscriptions: state.subscriptions.map((s) => s.id === id ? { ...s, isPaused: !s.isPaused } : s),
       })),
 
-      updateSettings: (partial) => set((state) => ({ settings: { ...state.settings, ...partial } })),
+      updateSettings: (partial) => {
+        set((state) => {
+          const updated = { ...state.settings, ...partial };
+          pushSettingsToRemote(updated).catch(() => {});
+          return { settings: updated };
+        });
+      },
       resetStore: () =>
         set({
           transactions: [],
