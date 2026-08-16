@@ -130,8 +130,8 @@ export function Sidebar() {
       {/* Desktop / iPad Sidebar (md+) */}
       <aside
         className={cn(
-          "hidden md:flex flex-shrink-0 flex-col bg-[#0D1420] border-r border-white/10 min-h-screen h-full z-30 transition-[width] duration-300 ease-out",
-          collapsed ? "w-[68px]" : "w-[220px]"
+          "hidden md:flex flex-shrink-0 flex-col bg-[#0D1420] border-r border-white/10 sticky top-0 h-screen z-30 transition-[width] duration-300 ease-out",
+          collapsed ? "w-[68px]" : "w-[210px] xl:w-[230px]"
         )}
       >
         <div className={cn("flex items-center px-4 h-16 border-b border-white/5 shrink-0", collapsed ? "justify-center" : "justify-between")}>

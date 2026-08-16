@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useTransactionStore } from "@/stores/use-transaction-store";
 import { formatCurrency, cn } from "@/lib/utils";
 import {
@@ -27,6 +28,18 @@ import { CashFlowChart } from "@/components/charts/cash-flow-chart";
 
 export function ViewerAnalyticsDashboard() {
   const { transactions, accounts, budgets, assets, liabilities } = useTransactionStore();
+  const [workspaceImage, setWorkspaceImage] = React.useState("/images/workspace-default.jpg");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const customBanner = localStorage.getItem("finance-tracker-custom-workspace-banner");
+      if (customBanner) {
+        setWorkspaceImage(customBanner);
+      } else {
+        setWorkspaceImage("/images/workspace-default.jpg");
+      }
+    }
+  }, []);
 
   // 1. Financial Overview Metrics
   const metrics = React.useMemo(() => {
@@ -150,16 +163,39 @@ export function ViewerAnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Real-time Viewer Header */}
-      <div className="p-5 rounded-2xl bg-[#0D1420] border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
+      {/* Workspace Sea Wave Hero Banner */}
+      <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl min-h-[220px] sm:min-h-[260px] flex flex-col justify-between group">
+        <Image
+          src={workspaceImage}
+          alt="Cozy Personal Workspace"
+          fill
+          className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+          priority
+          unoptimized={workspaceImage.startsWith("blob:") || workspaceImage.startsWith("data:")}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#080D16] via-[#080D16]/50 to-transparent opacity-90" />
+        <div className="relative z-10 p-6 flex flex-col justify-between h-full min-h-[220px] sm:min-h-[260px]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#10b981] animate-pulse" />
+              <span className="text-xs font-semibold text-white/90 tracking-wide">Personal Workspace (Viewer Mode)</span>
+            </div>
             <Badge variant="outline" className="text-xs border-blue-500/40 text-blue-400 bg-blue-500/10">
               <Zap className="h-3.5 w-3.5 mr-1 animate-pulse" /> Real-time Live Dashboard
             </Badge>
-            <span className="text-xs text-[#AAB5C5]">Auto-Sync dari Editor</span>
           </div>
-          <h2 className="text-xl font-extrabold text-white mt-1">Viewer Analytical Insights</h2>
+
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Personal Workspace</h2>
+            <p className="text-xs sm:text-sm text-white/80">Ruang pencatatan &amp; pemantauan finansial pribadi</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Real-time Viewer Header */}
+      <div className="p-5 rounded-2xl bg-[#0D1420] border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold text-white">Viewer Analytical Insights</h2>
           <p className="text-xs text-muted-foreground">
             Analisis lengkap arus kas, anggaran, dan kesehatan keuangan terkini.
           </p>
