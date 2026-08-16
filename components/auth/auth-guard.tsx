@@ -43,37 +43,40 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const [isSignUpMode, setIsSignUpMode] = React.useState(false);
+  const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
     setLoading(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    if (isSignUpMode) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-    if (error) {
-      setErrorMsg(error.message || "Gagal masuk. Periksa email dan kata sandi Anda.");
-    }
-    setLoading(false);
-  };
-
-  const handleSignUp = async () => {
-    if (!supabase) return;
-    setLoading(true);
-    setErrorMsg(null);
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      setErrorMsg(error.message);
+      if (error) {
+        setErrorMsg(error.message);
+      } else if (data.session) {
+        setIsAuthenticated(true);
+        initRealtimeSync();
+      } else {
+        setSuccessMsg("Akun pemilik berhasil dibuat! Jika verifikasi email aktif di Supabase, silakan periksa inbox email Anda atau matikan 'Confirm email' di Supabase Dashboard.");
+        setIsSignUpMode(false);
+      }
     } else {
-      setErrorMsg("Akun pemilik berhasil didaftarkan! Silakan login.");
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setErrorMsg("Email atau Kata Sandi salah / belum terdaftar. Pilih tab 'Daftar Akun Pemilik' jika baru pertama kali.");
+      }
     }
     setLoading(false);
   };
@@ -101,8 +104,38 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             </div>
             <h1 className="text-xl font-bold text-white tracking-tight">Akses Keuangan Pribadi</h1>
             <p className="text-xs text-muted-foreground">
-              Masukkan kredensial akun pribadi Anda untuk menghubungkan sinkronisasi real-time antar perangkat.
+              Masukkan kredensial akun pribadi Anda untuk menghubungkan HP & iPad.
             </p>
+          </div>
+
+          {/* Mode Switcher Tabs */}
+          <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-muted/60">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUpMode(false);
+                setErrorMsg(null);
+                setSuccessMsg(null);
+              }}
+              className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                !isSignUpMode ? "bg-card text-emerald-400 shadow-sm" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Masuk (Login)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUpMode(true);
+                setErrorMsg(null);
+                setSuccessMsg(null);
+              }}
+              className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                isSignUpMode ? "bg-card text-emerald-400 shadow-sm" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Daftar Akun Pemilik
+            </button>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -134,17 +167,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            <Button type="submit" isLoading={loading} className="w-full bg-[#10b981] hover:bg-[#10b981]/90 text-white rounded-xl h-10 font-semibold">
-              Masuk ke Workspace
-            </Button>
+            {successMsg && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
+                {successMsg}
+              </div>
+            )}
 
-            <button
-              type="button"
-              onClick={handleSignUp}
-              className="w-full text-center text-xs text-muted-foreground hover:text-white pt-2 transition-colors"
-            >
-              Daftarkan Akun Pemilik Baru (Hanya sekali di awal)
-            </button>
+            <Button type="submit" isLoading={loading} className="w-full bg-[#10b981] hover:bg-[#10b981]/90 text-white rounded-xl h-10 font-semibold">
+              {isSignUpMode ? "Buat Akun Pemilik Baru" : "Masuk ke Workspace"}
+            </Button>
           </form>
         </div>
       </div>
