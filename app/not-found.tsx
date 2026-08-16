@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { FileQuestion, Home } from "lucide-react";
 
+export const dynamic = "force-static";
+
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-4">
