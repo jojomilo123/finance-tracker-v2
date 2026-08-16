@@ -10,13 +10,13 @@ const basePath = process.env.NODE_ENV === "production" ? "/finance-tracker-v2" :
 export const metadata: Metadata = {
   title: "Finance Tracker",
   description: "Aplikasi pencatatan keuangan pribadi lokal. Catat pemasukan, pengeluaran, anggaran, dan target finansial Anda.",
-  manifest: `${basePath}/manifest.json?v=4`,
+  manifest: `${basePath}/manifest.json?v=5`,
   icons: {
-    icon: `${basePath}/logo.png?v=4`,
-    shortcut: `${basePath}/logo.png?v=4`,
+    icon: `${basePath}/logo.png?v=5`,
+    shortcut: `${basePath}/logo.png?v=5`,
     apple: [
-      { url: `${basePath}/apple-touch-icon.png?v=4`, sizes: "180x180", type: "image/png" },
-      { url: `${basePath}/logo.png?v=4`, sizes: "512x512", type: "image/png" },
+      { url: `${basePath}/apple-touch-icon.png?v=5`, sizes: "180x180", type: "image/png" },
+      { url: `${basePath}/logo.png?v=5`, sizes: "512x512", type: "image/png" },
     ],
   },
   appleWebApp: {
@@ -34,11 +34,11 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" sizes="180x180" href={`${basePath}/apple-touch-icon.png?v=4`} />
-        <link rel="apple-touch-icon-precomposed" sizes="180x180" href={`${basePath}/apple-touch-icon.png?v=4`} />
-        <link rel="apple-touch-icon" sizes="152x152" href={`${basePath}/apple-touch-icon.png?v=4`} />
-        <link rel="apple-touch-icon" sizes="167x167" href={`${basePath}/apple-touch-icon.png?v=4`} />
-        <link rel="icon" type="image/png" sizes="512x512" href={`${basePath}/logo.png?v=4`} />
+        <link rel="apple-touch-icon" sizes="180x180" href={`${basePath}/apple-touch-icon.png?v=5`} />
+        <link rel="apple-touch-icon-precomposed" sizes="180x180" href={`${basePath}/apple-touch-icon.png?v=5`} />
+        <link rel="apple-touch-icon" sizes="152x152" href={`${basePath}/apple-touch-icon.png?v=5`} />
+        <link rel="apple-touch-icon" sizes="167x167" href={`${basePath}/apple-touch-icon.png?v=5`} />
+        <link rel="icon" type="image/png" sizes="512x512" href={`${basePath}/logo.png?v=5`} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Finance Tracker" />
