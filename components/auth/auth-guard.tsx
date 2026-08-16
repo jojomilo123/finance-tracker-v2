@@ -10,6 +10,20 @@ import { Input } from "@/components/ui/input";
 import { ModeSelector } from "@/components/mode/mode-selector";
 import { useTransactionStore } from "@/stores/use-transaction-store";
 
+const AUTH_PERSIST_KEY = "finance_tracker_auth_user_id";
+
+export function saveAuthSession(uid: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(AUTH_PERSIST_KEY, uid);
+  }
+}
+
+export function clearAuthSession() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(AUTH_PERSIST_KEY);
+  }
+}
+
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { appMode } = useTransactionStore();
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
@@ -29,6 +43,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    // 1. Instant check for saved session in localStorage (iPad / HP persistence)
+    if (typeof window !== "undefined") {
+      const savedUid = localStorage.getItem(AUTH_PERSIST_KEY);
+      if (savedUid) {
+        setIsAuthenticated(true);
+        setUserId(savedUid);
+        setShowConfigModal(false);
+        initRealtimeSync().catch(() => {});
+        return;
+      }
+    }
+
     const configured = isSupabaseConfigured();
     const client = getSupabase();
 
@@ -55,8 +81,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       if (!isMounted) return;
       clearTimeout(timer);
       if (res?.data?.session) {
+        const uid = res.data.session.user.id;
+        saveAuthSession(uid);
         setIsAuthenticated(true);
-        setUserId(res.data.session.user.id);
+        setUserId(uid);
         initRealtimeSync().catch(() => {});
       } else {
         setIsAuthenticated(false);
@@ -73,8 +101,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const authRes = client.auth.onAuthStateChange((_event: string, session: any) => {
       if (!isMounted) return;
       if (session) {
+        const uid = session.user?.id || `user-${Date.now()}`;
+        saveAuthSession(uid);
         setIsAuthenticated(true);
-        setUserId(session.user?.id || null);
+        setUserId(uid);
         initRealtimeSync().catch(() => {});
       } else {
         setIsAuthenticated(false);
@@ -99,7 +129,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       setShowConfigModal(false);
       client.auth.getSession().then((res) => {
         if (res?.data?.session) {
+          const uid = res.data.session.user.id;
+          saveAuthSession(uid);
           setIsAuthenticated(true);
+          setUserId(uid);
           initRealtimeSync().catch(() => {});
         } else {
           setIsAuthenticated(false);
@@ -141,22 +174,29 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         const outcome: any = await Promise.race([actionPromise, timeoutPromise]);
 
         if (outcome?.res?.data?.session) {
+          const uid = outcome.res.data.session.user.id;
+          saveAuthSession(uid);
           setIsAuthenticated(true);
-          setUserId(outcome.res.data.session.user.id);
+          setUserId(uid);
           initRealtimeSync().catch(() => {});
         } else if (outcome?.res?.data?.user) {
+          const uid = outcome.res.data.user.id;
+          saveAuthSession(uid);
           setIsAuthenticated(true);
-          setUserId(outcome.res.data.user.id);
+          setUserId(uid);
         } else {
           // Instant fallback entry if network timeout, CORS error, or deleted user
+          saveAuthSession(fallbackUserId);
           setIsAuthenticated(true);
           setUserId(fallbackUserId);
         }
       } else {
+        saveAuthSession(fallbackUserId);
         setIsAuthenticated(true);
         setUserId(fallbackUserId);
       }
     } catch (err) {
+      saveAuthSession(fallbackUserId);
       setIsAuthenticated(true);
       setUserId(fallbackUserId);
     } finally {

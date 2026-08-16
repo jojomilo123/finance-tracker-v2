@@ -28,6 +28,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getSupabase } from "@/lib/supabase";
+import { clearAuthSession } from "@/components/auth/auth-guard";
 
 import { useTransactionStore } from "@/stores/use-transaction-store";
 
@@ -114,6 +115,7 @@ export function Sidebar() {
       ];
 
   const handleLogout = async () => {
+    clearAuthSession();
     const client = getSupabase();
     if (client) {
       await client.auth.signOut();

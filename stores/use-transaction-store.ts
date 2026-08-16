@@ -376,7 +376,7 @@ export const useTransactionStore = create<TransactionState>()(
     {
       name: "finance-tracker-tx-store",
       partialize: (state) => {
-        const { appMode, activeEditorLock, ...rest } = state;
+        const { activeEditorLock, ...rest } = state;
         return rest;
       },
     }

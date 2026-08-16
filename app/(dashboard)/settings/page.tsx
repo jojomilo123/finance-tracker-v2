@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useTransactionStore, AccountRecord } from "@/stores/use-transaction-store";
-import { Sliders, AlertTriangle, Save, RotateCcw, User, LogOut } from "lucide-react";
+import { Sliders, AlertTriangle, Save, RotateCcw, User, LogOut, Edit3, Eye } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { clearRemoteData, pushAccountToRemote } from "@/lib/sync-engine";
+import { clearAuthSession } from "@/components/auth/auth-guard";
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { settings, updateSettings, resetStore } = useTransactionStore();
+  const { settings, appMode, setAppMode, updateSettings, resetStore } = useTransactionStore();
   const [activeTab, setActiveTab] = React.useState<"workspace" | "preferences" | "danger">("workspace");
 
   const [displayName, setDisplayName] = React.useState(settings.name);
@@ -58,6 +59,7 @@ export default function SettingsPage() {
 
   const handleLogout = async () => {
     setShowLogoutConfirm(false);
+    clearAuthSession();
     const client = getSupabase();
     if (client) {
       await client.auth.signOut();
@@ -168,6 +170,61 @@ export default function SettingsPage() {
 
                 {activeTab === "preferences" && (
                   <div className="space-y-4">
+                    {/* App Mode Switcher (Editor vs Viewer) */}
+                    <div className="p-5 rounded-2xl bg-[#172131] border border-white/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-white">Mode Akses Aplikasi</p>
+                          <p className="text-xs text-muted-foreground">
+                            Atur mode akses perangkat ini antara Editor (izin penuh) atau Viewer (hanya membaca).
+                          </p>
+                        </div>
+                        <span className="text-xs px-2.5 py-1 rounded-full font-mono bg-white/5 border border-white/10 text-emerald-400">
+                          {appMode === "VIEWER" ? "Viewer Mode" : "Editor Mode"}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAppMode("EDITOR");
+                            toast({ variant: "success", title: "Mode Diubah", description: "Perangkat ini sekarang dalam Editor Mode (akses penuh edit)." });
+                          }}
+                          className={`p-3.5 rounded-xl border flex items-center space-x-3 transition-all text-left ${
+                            appMode === "EDITOR"
+                              ? "bg-emerald-500/15 border-emerald-500/50 text-emerald-400 font-semibold"
+                              : "bg-[#0D1420] border-white/10 text-[#AAB5C5] hover:bg-white/5"
+                          }`}
+                        >
+                          <Edit3 className="h-5 w-5 text-emerald-400 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold">Editor Mode</p>
+                            <p className="text-[10px] text-muted-foreground">Akses penuh tambah &amp; kelola transaksi</p>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAppMode("VIEWER");
+                            toast({ variant: "success", title: "Mode Diubah", description: "Perangkat ini sekarang dalam Viewer Mode (pemantauan read-only)." });
+                          }}
+                          className={`p-3.5 rounded-xl border flex items-center space-x-3 transition-all text-left ${
+                            appMode === "VIEWER"
+                              ? "bg-blue-500/15 border-blue-500/50 text-blue-400 font-semibold"
+                              : "bg-[#0D1420] border-white/10 text-[#AAB5C5] hover:bg-white/5"
+                          }`}
+                        >
+                          <Eye className="h-5 w-5 text-blue-400 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold">Viewer Mode</p>
+                            <p className="text-[10px] text-muted-foreground">Hanya membaca grafik &amp; laporan</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="p-4 rounded-xl bg-[#172131] border border-white/5 space-y-3">
                       <p className="text-xs font-semibold text-foreground">Penyimpanan Data</p>
                       <p className="text-xs text-muted-foreground">
