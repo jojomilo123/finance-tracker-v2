@@ -44,13 +44,9 @@ export function Navbar({ onOpenSearch, onOpenQuickAdd }: NavbarProps) {
         {/* Workspace Badge */}
         <div className="flex items-center space-x-2">
           <Avatar className="h-8 w-8 border border-white/10">
-            {settings.avatarUrl ? (
-              <AvatarImage src={settings.avatarUrl} alt={settings.name} />
-            ) : (
-              <AvatarFallback className="text-xs font-bold bg-[#10b981]/20 text-[#10b981]">
-                {initials}
-              </AvatarFallback>
-            )}
+            <AvatarFallback className="text-xs font-bold bg-[#10b981]/20 text-[#10b981]">
+              {initials}
+            </AvatarFallback>
           </Avatar>
           <span className="hidden md:inline-block text-xs font-medium text-white/90">{settings.name}</span>
         </div>

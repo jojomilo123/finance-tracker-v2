@@ -89,7 +89,7 @@ export function calculateMonthOverMonthChange(
   return Number(change.toFixed(1));
 }
 
-export function compressImage(file: File, maxDim = 300, quality = 0.7): Promise<string> {
+export function compressImage(file: File, maxDim = 1200, quality = 0.88): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {

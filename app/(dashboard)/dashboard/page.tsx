@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const handleChangePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const compressed = await compressImage(file, 300, 0.7);
+      const compressed = await compressImage(file, 1200, 0.88);
       setWorkspaceImage(compressed);
       updateSettings({ avatarUrl: compressed });
       if (typeof window !== "undefined") {
