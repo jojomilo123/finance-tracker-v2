@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig: NextConfig = {
+  output: "export",
+  basePath: isProd ? "/finance-tracker-v2" : "",
+  assetPrefix: isProd ? "/finance-tracker-v2/" : "",
+  images: {
+    unoptimized: true,
+  },
   reactStrictMode: true,
   experimental: {
     serverActions: {
@@ -9,7 +17,6 @@ const nextConfig: NextConfig = {
   },
   webpack: (config, { dev }) => {
     if (dev) {
-      // Disable webpack disk cache in development to prevent 404 CSS chunk corruption on Windows
       config.cache = false;
     }
     return config;
