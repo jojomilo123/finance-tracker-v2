@@ -33,6 +33,9 @@ jobs:
         run: npm install
 
       - name: Build with Next.js
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://reacitzacwbaaqvuwbsf.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlYWNpdHphY3diYWFxdnV3YnNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4ODk0MzUsImV4cCI6MjEwMjQ2NTQzNX0.DR0JAuB6aCcHvQ0GHYPMseB-pYh573y7nWb14jadkzw
         run: npm run build
 
       - name: Upload artifact
