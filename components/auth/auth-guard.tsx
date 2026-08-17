@@ -149,56 +149,63 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    const fallbackUserId = `user-${email ? email.split("@")[0] : Date.now()}`;
     const client = getSupabase();
 
-    // 1.5s max timeout to prevent any network or "Load failed" hang
-    const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ timeout: true }), 1500));
+    if (!client) {
+      setErrorMsg("Supabase belum terhubung. Pastikan Supabase Key sudah diatur.");
+      setLoading(false);
+      return;
+    }
+
+    // 10s timeout — sufficient for mobile 4G/WiFi networks
+    const timeoutPromise = new Promise<{ timeout: true }>((resolve) =>
+      setTimeout(() => resolve({ timeout: true }), 10000)
+    );
 
     try {
-      if (client) {
-        const actionPromise = (async () => {
-          try {
-            if (isSignUpMode) {
-              const res = await client.auth.signUp({ email, password });
-              return { res };
-            } else {
-              const res = await client.auth.signInWithPassword({ email, password });
-              return { res };
-            }
-          } catch (err) {
-            return { error: err };
-          }
-        })();
-
-        const outcome: any = await Promise.race([actionPromise, timeoutPromise]);
-
-        if (outcome?.res?.data?.session) {
-          const uid = outcome.res.data.session.user.id;
-          saveAuthSession(uid);
-          setIsAuthenticated(true);
-          setUserId(uid);
-          initRealtimeSync().catch(() => {});
-        } else if (outcome?.res?.data?.user) {
-          const uid = outcome.res.data.user.id;
-          saveAuthSession(uid);
-          setIsAuthenticated(true);
-          setUserId(uid);
+      const actionPromise = (async () => {
+        if (isSignUpMode) {
+          const res = await client.auth.signUp({ email, password });
+          return { res };
         } else {
-          // Instant fallback entry if network timeout, CORS error, or deleted user
-          saveAuthSession(fallbackUserId);
-          setIsAuthenticated(true);
-          setUserId(fallbackUserId);
+          const res = await client.auth.signInWithPassword({ email, password });
+          return { res };
         }
-      } else {
-        saveAuthSession(fallbackUserId);
-        setIsAuthenticated(true);
-        setUserId(fallbackUserId);
+      })();
+
+      const outcome: any = await Promise.race([actionPromise, timeoutPromise]);
+
+      if (outcome?.timeout) {
+        setErrorMsg("Koneksi ke server terlalu lama (timeout 10 detik). Periksa koneksi internet Anda dan coba lagi.");
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      saveAuthSession(fallbackUserId);
-      setIsAuthenticated(true);
-      setUserId(fallbackUserId);
+
+      if (outcome?.res?.error) {
+        setErrorMsg(outcome.res.error.message || "Login gagal. Periksa email dan kata sandi Anda.");
+        setLoading(false);
+        return;
+      }
+
+      if (outcome?.res?.data?.session) {
+        const uid = outcome.res.data.session.user.id;
+        saveAuthSession(uid);
+        setIsAuthenticated(true);
+        setUserId(uid);
+        initRealtimeSync().catch(() => {});
+      } else if (outcome?.res?.data?.user) {
+        // Sign up: user created but session may require email confirmation
+        const uid = outcome.res.data.user.id;
+        saveAuthSession(uid);
+        setIsAuthenticated(true);
+        setUserId(uid);
+        setSuccessMsg("Akun berhasil dibuat! Anda kini terhubung.");
+        initRealtimeSync().catch(() => {});
+      } else {
+        setErrorMsg("Tidak dapat memverifikasi akun. Coba lagi atau gunakan Mode Lokal.");
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Terjadi kesalahan jaringan. Periksa koneksi internet Anda.");
     } finally {
       setLoading(false);
     }
